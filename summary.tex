@@ -1,0 +1,110 @@
+\chapter*{Summary}
+
+A maioria de linguaxes de programación dinámicas dispoñen de mecanismos
+para empregar librarias ou módulos implementados en algunha outra linguaxe
+compilada a código nativo. Deste xeito pódense reutilizar componentes
+de software existentes, e tamén dar acceso a funcionalidades do sistema que
+doutro xeito non estarian dispoñibles. Como efecto colateral, tamén é posible
+implementar partes dun sistema que resultan críticos para o seu rendemento
+utilizando código nativo.
+
+Sen embargo, a utilización de código nativo dende unha linguaxe de
+programación dinámica require a creación de unha capa de software (chamado
+“bridge”, ou “binding”) entre o código nativo e a máquina virtual que
+implementa a linguaxe dinámica. Estes “bindings”, ben sexan creados de
+xeito manual, ou coa axuda de ferramentas de xeración de código, precisan
+ser compilados e engadidos á máquina virtual da linguaxe dinámica antes
+de poder ser utilizados.
+
+Agora ben, durante a compilación a código máquina nativo, a maioría de
+compiladores poden engadir nos binarios xerados información de depuración,
+que ten o obxectivo de permitir a outras ferramentas (típicamente, a un
+depurador) coñecer información adicional. Entre a información incluída,
+está a información sobre os tipos de datos e a súa organización en memoria,
+as funcións dispoñibles en cada unidade de compilación e os seus parámetros,
+et cétera. que é en efecto un superconxunto da información necesaria para
+saber como invocar o devandito código.
+
+Este proxecto busca utiliza-la información de depuración xerada por un
+compilador para, en tempo de execución e sen necesidade dun paso intermedio
+de creación de “bindings”, permitir a invocación directa de código nativo
+dende a linguaxe de programación Lua.
+
+\subsection*{Obxectivos Concretos}
+
+O proxecto ten como obxectivo principal a creación de un módulo para a
+linguaxe de programación Lua —incluíndo calesquera modificacións fosen
+necesarias na implementación da máquina virtual de Lua— que permitan utilizar
+librerías existentes implementadas en C, sen necesidade de ningún tipo de
+intervención manual, en tempo de execución.
+
+A linguaxe Lua foi escollida debido á dispoñibilidade do código fonte, que se
+distribúe baixo unha licenza de software libre que fai posible analiza-la
+implementación da linguaxe e realizar as modificacións necesarias. Así
+mesmo, a implementación de referencia é compacta (só 16.000 liñas de código),
+o que facilita a súa comprensión; e nos últimos anos ten gañado en
+popularidade, especialmente na área de desenvolvemento de video xogos,
+que utilizan Lua para a lóxica de negocio.
+
+A implementación fará uso da información de depuración en formato DWARF
+que os compiladores modernos de C/C++ xeran durante o proceso de compilación
+para obter a información necesaria (nomes de funcións, os seus parámetros,
+tipos de datos e as súas disposicións en memoria) para, en tempo de execución,
+xerar o código necesario para permitir o seu uso dende Lua.
+
+Para acotar o alcance do proxecto, a implementación inicial soportará
+únicamente a arquitectura \texttt{x86\_64}, en sistemas tipo Unix que
+utilizan o formato de información de depuración DWARF embebida en
+binarios ELF. Sen embargo, a implementación utilizará as abstraccións
+necesárias para facilitar a portabilidade a outras plataformas e
+sistemas operativos.
+
+\subsection*{Material e Medios Necesarios}
+
+\begin{itemize}
+	\item Un ordenador persoal \texttt{x86\_64}, con un sistema GNU/Linux
+		que utilice binarios ELF con información de depuración DWARF.
+	\item As librerías \texttt{libelf} e \texttt{libdwarf}.
+	\item Ferramentas estándar de desenvolvemento (Make, compilador de C,
+		depurador, editor de texto, etc.)
+\end{itemize}
+
+
+\subsection*{Fases Principais do Traballo}
+
+\begin{enumerate}
+\item Planificación do traballo a realizar.
+\item Análise e comprensión dos estándares ELF e DWARF.
+\item Deseño da arquitectura.
+\item Implementación.
+\item Realización de probas e validación dos resultados obtidos.
+\item Elaboración da memoria.
+\end{enumerate}
+
+\subsection*{Método de Traballo}
+
+Utilizaránse metodoloxías áxiles de desenvolvemento, que fomentan
+facer o desenvolvemento de xeito iterativo:
+
+\begin{itemize}
+\item De Scrum utilizaránse aqueles conceptos que teñen sentido para unha
+	proxecto unipersoal. Concretamente, utilizaránse iteracións e “sprints”,
+	coas súas respectivas sesión de planificación e revisión; pero non
+	procede facer reunións de Scrum diarias, ou ter un “Scrum Master” (xa
+	que sería a mesma persoa).
+
+\item A maiores, utilizaráse o método Kanban para controlar o estado das
+	tarefas ó longo do desenvolvemento. Este método, inventado por Toyota
+	para controlar o estado das cadeas de producción, utiliza un taboleiro
+	onde cada elemento é unha tarefa a realizar, e os elementos se
+	distribúen en columnas segundo o seu estado (por exemplo, en
+	desenvolvemento de software, os estados serían «pendente», «en progreso»,
+	«en fase de probas», «finalizado», etc). Ó estaren tódalas tarefas sempre
+	visibles no taboleiro, pódese observar o progreso de forma sinxela e
+	intuitiva.
+\end{itemize}
+
+Con posterioridade á presentación do Proxecto de Fin de Carreira, o autor
+ten a intención de continuar mellorándoo, e de publica-lo código fonte
+producido con unha licencia de Software Libre. Debido a isto, todo o código
+e documentación relacionada, incluída a memoria, redactaráse in inglés.

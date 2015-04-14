@@ -1,0 +1,194 @@
+% vim:ft=tex:
+%
+\documentclass[a4paper,
+	fontsize=12pt,
+	titlepage=firstiscover,
+	chapterprefix=false,
+	appendixprefix=true,
+	numbers=endperiod,
+	twoside]{scrbook}
+%\usepackage[utf8]{inputenc}
+
+% Graphics support
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Make a TOC in the generated PDF
+\usepackage[colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage[open]{bookmark}
+\bookmarksetup{color=blue}
+
+% Fonts
+\usepackage{fontspec}
+\defaultfontfeatures{Scale=MatchLowercase,Ligatures=TeX}
+
+% \setsansfont{Alegreya Sans}[SmallCapsFont=* SC]
+% \setmainfont{Alegreya}[SmallCapsFont=* SC]
+
+% \setmainfont{Andada}[SmallCapsFont=* SC]
+% \setsansfont{Overpass}
+
+% \setmainfont{PermianSlabSerifTypeface}
+\setmainfont{PermianSerifTypeface}
+\setsansfont{PermianSansTypeface}
+
+% \setsansfont{Carlito}
+% \setsansfont{Istok}
+% \setsansfont{Lato}
+
+% \setmainfont{Bitter}
+% \setmainfont{Brill}
+% \setmainfont{Doves Type}
+% \setmainfont{Heuristica} % SC
+% \setmainfont{Libre Caslon Text}
+
+% \setmonofont{Source Code Pro}
+\setmonofont{CamingoCode}
+% \setmonofont{PragmataPro}
+% \setmonofont{Luxi Mono}
+% \setmonofont{Migu 2M}
+% \setmonofont{monoOne}
+
+\usepackage{setspace}
+\onehalfspacing
+% \doublespacing
+% \setlength{\textwidth}{15cm}
+% \setlength{\textheight}{22cm}
+\parskip=6pt
+\parindent=10pt
+
+% \usepackage{fancyhdr}
+% \pagestyle{fancy}
+% \fancyhf{}
+% \fancyhf[HR]{\thepage}
+% \fancyhf[HL]{\nouppercase\rightmark}
+\usepackage{scrlayer-scrpage}
+\usepackage{booktabs}
+
+% Pretty code listings
+\usepackage{listings}
+\lstdefinestyle{memoir}{basicstyle = \small\ttfamily}
+\lstset{style=memoir}
+
+\newcommand\PfcTitle[0]{%
+Automatic bridging of native code to Lua
+using existing debugging information\relax}
+\newcommand\PfcAuthor[0]{%
+Adrián Pérez de Castro\relax}
+\newcommand\PfcDirector[0]{%
+Laura Milagros Castro Souto\relax}
+
+
+\title{\PfcTitle}
+\author{\PfcAuthor}
+
+\begin{document}
+
+\begin{titlepage}
+	\begin{center}
+        \vspace{7cm}
+        % Logo
+        \begin{tikzpicture}[y=0.80pt, x=0.8pt,yscale=-1, inner sep=0pt, outer sep=0pt, scale=0.2]
+          \path[fill=magenta,nonzero rule] (220.7188,106.4062) -- (382.3633,33.4609) ..
+            controls (341.6836,12.8594) and (284.3281,-0.0039) .. (220.7227,-0.0039) ..
+            controls (157.1016,-0.0039) and (99.7461,12.8594) .. (59.0742,33.4609) --
+            (220.7188,106.4062);
+          \path[fill=magenta,nonzero rule] (440.9648,89.9531) .. controls
+            (436.4648,76.9375) and (427.1289,64.7109) .. (413.8828,53.7188) --
+            (233.1914,105.5312) -- (440.9648,89.9531);
+            \path[fill=magenta,nonzero rule] (414.9375,161.0898) .. controls
+              (428.0547,149.9570) and (437.2305,137.6055) .. (441.4414,124.4531) --
+              (232.9805,109.8984) -- (414.9375,161.0898);
+            \path[fill=magenta,nonzero rule] (220.7305,109.2188) -- (57.9609,181.6680) ..
+              controls (98.6992,202.6055) and (156.5195,215.6992) .. (220.7227,215.6992) ..
+              controls (284.9102,215.6992) and (342.7344,202.6055) .. (383.4805,181.6680) --
+              (220.7305,109.2188);
+          \path[fill=magenta,nonzero rule] (0.0000,124.4531) .. controls (4.2109,137.6055)
+            and (13.3867,149.9570) .. (26.4961,161.0898) -- (208.4492,109.8984) --
+            (0.0000,124.4531);
+          \path[fill=magenta,nonzero rule] (208.2422,105.5312) -- (27.5625,53.7109) ..
+            controls (14.3164,64.7070) and (4.9766,76.9336) .. (0.4727,89.9531) --
+            (208.2422,105.5312);
+        \end{tikzpicture}
+
+		{\Large\textbf{Facultade de Informática \\
+			Universidade da Coruña}} \\
+		{\large\textit{Departamento de Computación}}
+		\vspace{1cm}
+
+		{\large\textsc{Proyecto de Fin de Carrera \\
+			Ingeniería Informática}}
+		\vspace{1cm}
+
+		{\Large\textbf{\PfcTitle}}
+	\end{center}
+
+	\vfill
+
+	\begin{flushright}
+		\begin{tabular}{ll}
+			{\large\textbf{Student:}}  & {\large\PfcAuthor} \\
+			{\large\textbf{Director:}} & {\large\PfcDirector} \\
+			{\large\textbf{Date:}}     & {\large\today}
+		\end{tabular}
+	\end{flushright}
+\end{titlepage}
+
+\frontmatter
+
+% General information
+\cleardoublepageusingstyle{empty}
+\chapter*{General Information}
+
+\vspace{1cm}
+\begin{tabular}{p{0.35\textwidth}p{0.65\textwidth}}
+	\textbf{\textit{Title:}} & \textbf{\PfcTitle} \vspace{0.5cm} \\
+	\textit{Project Kind:} & Classic engineering project. \vspace{0.5cm} \\
+	\textit{Student:}      & \PfcAuthor \vspace{0.5cm} \\
+	\textit{Director:}     & \PfcDirector \vspace{0.5cm} \\
+	\textit{Tribunal members:} & \vspace{3cm} \\
+	\textit{Resevere members:} & \vspace{3cm} \\
+	\textit{Reading date:} & \vspace{0.5cm}   \\
+	\textit{Mark:} & \\
+\end{tabular}
+
+% Certificate
+\cleardoublepageusingstyle{empty}
+\include{certificate}
+
+% Dedication
+\cleardoublepageusingstyle{empty}
+\begin{minipage}[t][6cm][l]{\textwidth}
+	\vspace{10cm}
+	\begin{flushright}
+		\textit{Do it, or don't, but don't try.}
+	\end{flushright}
+\end{minipage}
+
+% Summary
+\cleardoublepageusingstyle{empty}
+\include{summary}
+
+% Keywords
+\cleardoublepageusingstyle{empty}
+\chapter*{Keywords}
+\begin{itemize}
+	\item Automatic binding generation.
+	\item JIT code generation.
+	\item DWARF debugging information format.
+	\item Lua programming language.
+\end{itemize}
+
+% Indexes
+\cleardoublepage
+\tableofcontents
+\listoffigures
+\listoftables
+
+% Intro
+\mainmatter
+\include{introduction}
+\include{contextualization}
+\include{implementation}
+
+\end{document}

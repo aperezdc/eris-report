@@ -1,0 +1,23 @@
+% vim: ft=tex
+
+\chapter{Implementation}
+
+\section{Memory owners and life-cycle}
+
+Problem: functions that allocate memory
+
+\begin{lstlisting}[language=c]
+struct point {
+	int x;
+	int y;
+};
+\end{lstlisting}
+
+In Lua, we could create an instance like this:
+
+\begin{lstlisting}[language={[5.2]Lua}]
+local Geometry = eris.wrap("libgeometry.so")
+-- Creates heavy userdata, the Lua GC handles freeing memory
+local point = Geometry.point { x = 1, y = -1 }
+\end{lstlisting}
+

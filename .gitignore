@@ -1,0 +1,8 @@
+*.lo[gft]
+*.aux
+*.toc
+*.out
+.*.sw[op]
+.ninja_log
+.ninja_deps
+memoir.pdf
