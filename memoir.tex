@@ -3,34 +3,81 @@
 \documentclass[a4paper,
 	fontsize=12pt,
 	titlepage=firstiscover,
-	chapterprefix=false,
+	chapterprefix=true,
 	appendixprefix=true,
-	numbers=endperiod,
+	headings=big,
+	headsepline,
+	toc=bibliographynumbered,
 	twoside]{scrbook}
-%\usepackage[utf8]{inputenc}
+
+\usepackage[english]{babel}
+\usepackage{hyphenat}
+\usepackage{varioref}
 
 % Graphics support
 \usepackage{xcolor}
+\usepackage{dirtree}
+\usepackage{calc}
 \usepackage{tikz}
 
+\definecolor{grey}{rgb}{0.5, 0.5, 0.5}
+\definecolor{lightgrey}{rgb}{0.95, 0.95, 0.95}
+\definecolor{grassgreen}{rgb}{0.1, 0.85, 0.2}
+\definecolor{fadedbrown}{rgb}{0.85, 0.1, 0.1}
+\definecolor{darkmagenta}{rgb}{0.65, 0.0, 0.65}
+
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+
+\def\foldersymbol{\tikz\fill[scale=0.25]
+  (0, 0) -- (1.7, 0) -- (1.7, 1) -- (1, 1) --
+  (0.85, 1.25) -- (0.15, 1.25) -- (0, 1) -- cycle;}
+\newcommand\inlinesymbol[1]{\resizebox{\widthof{#1}*\ratio{\widthof{x}}{\widthof{\normalsize x}}}{!}{#1}}
+
+\newcommand\DtFolder[1]{{\inlinesymbol{\color{grey}\foldersymbol}} #1}
+\newcommand\Tick{\inlinesymbol\checkmark\relax}
+
+% Glossary/Acronyms
+\usepackage[acronym]{glossaries}
+\newacronym{ELF}{\textsc{Elf}}{Executable and Linkable Format}
+\newacronym{DWARF}{\textsc{Dwarf}}{Debugging With Attributed Record Formats}
+\newacronym{JIT}{\textsc{Jit}}{Just-In-Time}
+
+\def\Dwarf*{\gls{DWARF}}
+\def\Elf*{\gls{ELF}}
+\def\Jit*{\gls{JIT}}
+
+\def\Ldwarf*{\texttt{libdwarf}}
+\def\Lelf*{\texttt{libelf}}
+\def\Lffi*{\texttt{libffi}}
+\def\Lreadline*{\texttt{libreadline}}
+\def\ErisSo*{\texttt{eris.so}}
+\def\GnuLinux*{\textsc{Gnu}/Linux}
+\def\GnuMake*{\textsc{Gnu} Make}
+\def\Eris*{\textsc{Eris}}
+
 % Make a TOC in the generated PDF
-\usepackage[colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage[pdfstartview=FitH,
+	unicode=true,
+	colorlinks=true,
+	linkcolor=magenta,
+	linktoc=all]{hyperref}
 \usepackage[open]{bookmark}
 \bookmarksetup{color=blue}
+% \usepackage{minitoc}
 
 % Fonts
 \usepackage{fontspec}
-\defaultfontfeatures{Scale=MatchLowercase,Ligatures=TeX}
+\defaultfontfeatures{Ligatures=TeX}
 
 % \setsansfont{Alegreya Sans}[SmallCapsFont=* SC]
 % \setmainfont{Alegreya}[SmallCapsFont=* SC]
 
-% \setmainfont{Andada}[SmallCapsFont=* SC]
+\setmainfont{Andada}[SmallCapsFont=* SC]
 % \setsansfont{Overpass}
 
 % \setmainfont{PermianSlabSerifTypeface}
-\setmainfont{PermianSerifTypeface}
-\setsansfont{PermianSansTypeface}
+% \setmainfont{PermianSerifTypeface}
+% \setsansfont{PermianSansTypeface}
 
 % \setsansfont{Carlito}
 % \setsansfont{Istok}
@@ -38,37 +85,66 @@
 
 % \setmainfont{Bitter}
 % \setmainfont{Brill}
-% \setmainfont{Doves Type}
-% \setmainfont{Heuristica} % SC
 % \setmainfont{Libre Caslon Text}
 
-% \setmonofont{Source Code Pro}
-\setmonofont{CamingoCode}
-% \setmonofont{PragmataPro}
-% \setmonofont{Luxi Mono}
-% \setmonofont{Migu 2M}
-% \setmonofont{monoOne}
+\newfontfamily\RlwLight[
+	ItalicFont     = {Raleway ExtraLight Italic},
+	BoldFont       = {Raleway Light},
+	BoldItalicFont = {Raleway Light Italic}]{Raleway ExtraLight}
+\setsansfont{Raleway}
+
+% \setmonofont[Scale=MatchLowercase]{Input Mono}
+% \setmonofont[Scale=MatchLowercase]{Source Code Pro}
+% \setmonofont[Scale=MatchLowercase]{CamingoCode}
+\setmonofont[Scale=MatchUppercase]{CamingoCode}
+% \setmonofont[Scale=MatchLowercase]{PragmataPro}
+% \setmonofont[Scale=MatchLowercase]{Akkurat-Mono}
+% \setmonofont[Scale=MatchLowercase]{Inconsolatazi4}
+
 
 \usepackage{setspace}
 \onehalfspacing
 % \doublespacing
-% \setlength{\textwidth}{15cm}
-% \setlength{\textheight}{22cm}
 \parskip=6pt
 \parindent=10pt
 
-% \usepackage{fancyhdr}
-% \pagestyle{fancy}
-% \fancyhf{}
-% \fancyhf[HR]{\thepage}
-% \fancyhf[HL]{\nouppercase\rightmark}
 \usepackage{scrlayer-scrpage}
+% Header:
+%   Inner: section numbering and title
+%   Outer: chapter number
+\ohead{Chapter \thechapter}
+\chead{}
+\ihead{\rightmark}
+% Footer:
+%   Center: page number
+\cfoot{\thepage}
+\ifoot{}
+\ofoot{}
+
+\setkomafont{chapterprefix}{\RlwLight\Large}
+\setkomafont{chapter}{\RlwLight\bfseries\Huge}
+
 \usepackage{booktabs}
 
 % Pretty code listings
-\usepackage{listings}
-\lstdefinestyle{memoir}{basicstyle = \small\ttfamily}
-\lstset{style=memoir}
+\usepackage{minted}
+\setminted{
+  fontsize        = \small,
+  autogobble      = true,
+  breaklines      = true,
+  codetagify      = true,
+  encoding        = utf-8,
+  outencoding     = utf-8,
+  frame           = leftline,
+  framerule       = 5pt,
+  framesep        = 0.65em,
+  xleftmargin     = 1em,
+  xrightmargin    = 1em,
+  rulecolor       = \color{lightgrey},
+}
+
+\include{hyph}
+
 
 \newcommand\PfcTitle[0]{%
 Automatic bridging of native code to Lua
@@ -83,6 +159,8 @@ Laura Milagros Castro Souto\relax}
 \author{\PfcAuthor}
 
 \begin{document}
+\dominitoc
+\pagestyle{empty}
 
 \begin{titlepage}
 	\begin{center}
@@ -137,7 +215,7 @@ Laura Milagros Castro Souto\relax}
 \frontmatter
 
 % General information
-\cleardoublepageusingstyle{empty}
+\cleardoublepage
 \chapter*{General Information}
 
 \vspace{1cm}
@@ -153,11 +231,11 @@ Laura Milagros Castro Souto\relax}
 \end{tabular}
 
 % Certificate
-\cleardoublepageusingstyle{empty}
+\cleardoublepage
 \include{certificate}
 
 % Dedication
-\cleardoublepageusingstyle{empty}
+\cleardoublepage
 \begin{minipage}[t][6cm][l]{\textwidth}
 	\vspace{10cm}
 	\begin{flushright}
@@ -165,12 +243,22 @@ Laura Milagros Castro Souto\relax}
 	\end{flushright}
 \end{minipage}
 
+% Acknowledgements
+\cleardoublepage
+\chapter*{Acknowledgements}
+
+Last, but not least, I would like to thank my “adoptive” family, who have
+kindly accepted myself as one more of them, and that have been of invaluable
+support. Their appreciation of knowledge is something I am willing to pass
+down to upcoming generations.
+
+
 % Summary
-\cleardoublepageusingstyle{empty}
+\cleardoublepage
 \include{summary}
 
 % Keywords
-\cleardoublepageusingstyle{empty}
+\cleardoublepage
 \chapter*{Keywords}
 \begin{itemize}
 	\item Automatic binding generation.
@@ -187,8 +275,14 @@ Laura Milagros Castro Souto\relax}
 
 % Intro
 \mainmatter
+\pagestyle{scrheadings}
 \include{introduction}
 \include{contextualization}
+\include{casestudy}
 \include{implementation}
+\include{conclusions}
+
+\backmatter
+\include{glossary}
 
 \end{document}

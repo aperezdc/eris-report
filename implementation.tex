@@ -2,22 +2,149 @@
 
 \chapter{Implementation}
 
+\section{Prerequisites}
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lrccc}
+	\toprule
+	Component & Version  & Required & Optional & Bundled \\
+	\midrule
+	Lua        & 5.3      & \Tick    &          & \Tick   \\
+	\Ldwarf*   & 20150507 & \Tick    &          & \Tick   \\
+	\Lelf*     & 0.152    & \Tick    &          &         \\
+	\Lreadline*& 5.0      &          & \Tick    &         \\
+	\Lffi*     & 3.1      & \Tick    &          &         \\
+	\bottomrule
+    \end{tabular}
+    \caption{Dependencies}
+    \label{tab:eris-dependencies}
+\end{table}
+
+\autoref{tab:eris-dependencies} shows which dependencies are expected to be
+installed in the system.
+The items marked (\Tick) as \emph{bundled} are not including in the source
+repository, but the build system includes support for downloading tarballs
+with their source code and doing a local build that will be used locally
+In the case of using a bundled copy of \Ldwarf*, it will be statically linked.
+See~\nameref{sec:running-configure} for details on how to use the
+bundled libraries.
+
+\begin{table}
+    \begin{tabular}{ccp{0.4\textwidth}}
+       	\toprule
+	Distribution & Installation Command & Packages \\
+	\midrule
+	Debian, Ubuntu\footnote{Those systems do not provide Lua 5.3 packages
+	    at the time of writing, therefore is recommended
+	    to~\hyperref{sec:running-configure}{configure the build} to use
+	    the bundled version.}
+	& \texttt{apt-get install} &
+	    \texttt{libdwarf-dev ninja-build}
+	    \\
+	Arch Linux & \texttt{pacman -S} &
+	    \texttt{libdwarf ninja lua}
+	    \\
+	\bottomrule
+    \end{tabular}
+    \caption{Dependency packages in popular \GnuLinux* distributions.}
+    \label{tab:distro-dependency-packages}
+\end{table}
+
+\autoref{tab:distro-dependency-packages} shows which packages from
+popular \GnuLinux* distributions provide the required dependencies.
+
+\section{Project Structure}
+
+The \Eris* source code
+
+\begin{figure}[h]
+    \centering
+    \noindent\begin{minipage}{0.75\textwidth}
+\dirtree{%
+.1 \DtFolder{eris/}.
+.2   \DtFolder{doc/} \DTcomment{Documentation and API reference}.
+.2   \DtFolder{examples/}.
+.3     *.lua \DTcomment{Module usage examples}.
+.2   \DtFolder{tools/} \DTcomment{Build \& test utilities}.
+.3     \DtFolder{ninja/} \DTcomment{Ninja build support files}.
+.3     \DtFolder{make/} \DTcomment{\GnuMake* build support files}.
+.2   \DtFolder{test/}.
+.3     *.lua \DTcomment{Unit tests}.
+.2   uthash.h \DTcomment{Copy of UT-hash}.
+.2   eris-*.c \DTcomment{Module sources}.
+.2   eris-*.h \DTcomment{Module sources}.
+}
+    \end{minipage}
+    \caption{Source tree structure.}
+\end{figure}
+
+
+\section{Type Representation}
+
+The \texttt{ErisTypeInfo} structure is used to represent type information.
+
+\begin{listing}
+    \centering
+    \begin{minted}[autogobble]{c}
+	typedef enum {
+	    ERIS_TYPE_VOID,    /* void        */
+	    ERIS_TYPE_BOOL,    /* _Bool       */
+	    ERIS_TYPE_S8,      /* int8_t      */
+	    ERIS_TYPE_U8,      /* uint8_t     */
+	    ERIS_TYPE_S16,     /* int16_t     */
+	    ERIS_TYPE_U16,     /* uint16_t    */
+	    ERIS_TYPE_S32,     /* int32_t     */
+	    ERIS_TYPE_U32,     /* uint32_t    */
+	    ERIS_TYPE_S64,     /* int64_t     */
+	    ERIS_TYPE_U64,     /* uint64_t    */
+	    ERIS_TYPE_FLOAT,   /* float       */
+	    ERIS_TYPE_DOUBLE,  /* double      */
+	    ERIS_TYPE_TYPEDEF, /* typedef … T */
+	    ERIS_TYPE_CONST,   /* const T     */
+	    ERIS_TYPE_POINTER, /* T*          */
+	    ERIS_TYPE_ARRAY,   /* T …[n]      */
+	    ERIS_TYPE_STRUCT,  /* struct …    */
+	    ERIS_TYPE_UNION,   /* union …     */
+	    ERIS_TYPE_ENUM,    /* enum …      */
+	} ErisType;
+    \end{minted}
+    \caption{\texttt{ErisType} enumeration.}
+    \label{lst:ErisType}
+\end{listing}
+
+\begin{minted}{c}
+struct _ErisTypeInfo {
+    ErisType type;
+    union {
+        struct TI_base     ti_base;
+        struct TI_pointer  ti_pointer;
+        struct TI_typedef  ti_typedef;
+        struct TI_const    ti_const;
+        struct TI_array    ti_array;
+        struct TI_compound ti_compound;
+    };
+};
+typedef struct _ErisTypeInfo ErisTypeInfo;
+\end{minted}
+
+
 \section{Memory owners and life-cycle}
 
 Problem: functions that allocate memory
 
-\begin{lstlisting}[language=c]
+\begin{minted}{c}
 struct point {
 	int x;
 	int y;
 };
-\end{lstlisting}
+\end{minted}
 
 In Lua, we could create an instance like this:
 
-\begin{lstlisting}[language={[5.2]Lua}]
+\begin{minted}{lua}
 local Geometry = eris.wrap("libgeometry.so")
 -- Creates heavy userdata, the Lua GC handles freeing memory
 local point = Geometry.point { x = 1, y = -1 }
-\end{lstlisting}
+\end{minted}
 

@@ -1,12 +1,14 @@
 
 rule texpdf
-  command = lualatex ${tex_main} && lualatex --interaction=batchmode ${tex_main}
+  command = lualatex --shell-escape ${tex_main} && lualatex --shell-escape --interaction=batchmode ${tex_main}
 
 build memoir.pdf : texpdf $
 contextualization.tex $
 implementation.tex $
 introduction.tex $
+conclusions.tex $
 certificate.tex $
+casestudy.tex $
 summary.tex $
 memoir.tex
   tex_main = memoir.tex
