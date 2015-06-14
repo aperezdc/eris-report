@@ -6,3 +6,10 @@
 .ninja_log
 .ninja_deps
 memoir.pdf
+*.ac[rn]
+_minted-memoir/
+*.ist
+*.auxlock
+*.glsdefs
+*.alg
+*.md5

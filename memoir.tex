@@ -14,17 +14,21 @@
 \usepackage{hyphenat}
 \usepackage{varioref}
 
+\usepackage{unicode-math}
+
 % Graphics support
 \usepackage{xcolor}
 \usepackage{dirtree}
 \usepackage{calc}
 \usepackage{tikz}
+\usetikzlibrary{arrows,shapes,fit,shadows,positioning,chains}
 
 \definecolor{grey}{rgb}{0.5, 0.5, 0.5}
 \definecolor{lightgrey}{rgb}{0.95, 0.95, 0.95}
 \definecolor{grassgreen}{rgb}{0.1, 0.85, 0.2}
 \definecolor{fadedbrown}{rgb}{0.85, 0.1, 0.1}
 \definecolor{darkmagenta}{rgb}{0.65, 0.0, 0.65}
+\definecolor{lightblue}{rgb}{0.5, 0.75, 1.0}
 
 \def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
 
@@ -36,24 +40,6 @@
 \newcommand\DtFolder[1]{{\inlinesymbol{\color{grey}\foldersymbol}} #1}
 \newcommand\Tick{\inlinesymbol\checkmark\relax}
 
-% Glossary/Acronyms
-\usepackage[acronym]{glossaries}
-\newacronym{ELF}{\textsc{Elf}}{Executable and Linkable Format}
-\newacronym{DWARF}{\textsc{Dwarf}}{Debugging With Attributed Record Formats}
-\newacronym{JIT}{\textsc{Jit}}{Just-In-Time}
-
-\def\Dwarf*{\gls{DWARF}}
-\def\Elf*{\gls{ELF}}
-\def\Jit*{\gls{JIT}}
-
-\def\Ldwarf*{\texttt{libdwarf}}
-\def\Lelf*{\texttt{libelf}}
-\def\Lffi*{\texttt{libffi}}
-\def\Lreadline*{\texttt{libreadline}}
-\def\ErisSo*{\texttt{eris.so}}
-\def\GnuLinux*{\textsc{Gnu}/Linux}
-\def\GnuMake*{\textsc{Gnu} Make}
-\def\Eris*{\textsc{Eris}}
 
 % Make a TOC in the generated PDF
 \usepackage[pdfstartview=FitH,
@@ -64,6 +50,9 @@
 \usepackage[open]{bookmark}
 \bookmarksetup{color=blue}
 % \usepackage{minitoc}
+\usepackage[acronym,nomain]{glossaries}
+\makeglossaries
+\input{glossary}
 
 % Fonts
 \usepackage{fontspec}
@@ -96,10 +85,13 @@
 % \setmonofont[Scale=MatchLowercase]{Input Mono}
 % \setmonofont[Scale=MatchLowercase]{Source Code Pro}
 % \setmonofont[Scale=MatchLowercase]{CamingoCode}
-\setmonofont[Scale=MatchUppercase]{CamingoCode}
+% \setmonofont[Scale=MatchUppercase]{CamingoCode}
 % \setmonofont[Scale=MatchLowercase]{PragmataPro}
 % \setmonofont[Scale=MatchLowercase]{Akkurat-Mono}
+\setmonofont[Scale=MatchUppercase]{Inconsolatazi4}
 % \setmonofont[Scale=MatchLowercase]{Inconsolatazi4}
+
+\setmathfont{Asana Math}
 
 
 \usepackage{setspace}
@@ -143,7 +135,7 @@
   rulecolor       = \color{lightgrey},
 }
 
-\include{hyph}
+\include{hyphenation}
 
 
 \newcommand\PfcTitle[0]{%
@@ -159,7 +151,7 @@ Laura Milagros Castro Souto\relax}
 \author{\PfcAuthor}
 
 \begin{document}
-\dominitoc
+% \dominitoc
 \pagestyle{empty}
 
 \begin{titlepage}
@@ -273,16 +265,19 @@ down to upcoming generations.
 \listoffigures
 \listoftables
 
-% Intro
 \mainmatter
 \pagestyle{scrheadings}
 \include{introduction}
 \include{contextualization}
-\include{casestudy}
+\include{design}
 \include{implementation}
 \include{conclusions}
 
 \backmatter
-\include{glossary}
+\cleardoublepage
+\chapter{Glossary}
+\glsaddall
+% \printglossary[type=\acronymtype]
+\printglossary
 
 \end{document}

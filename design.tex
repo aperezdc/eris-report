@@ -1,0 +1,580 @@
+% vim: ft=tex spell spelllang=en
+\cleardoublepage
+\chapter{Analysis \& Design}
+
+\section{Analyzing DWARF}
+
+The \gls{DWARF} format was first developed by the Bell Labs for the
+\verb|sdb| debugger of System V Unix. Nowadays the formal specification
+is available under the GNU \gls{FDL}, and its new versions have been
+discussed using public channels of communication, following a
+community-oriented process. Downloadable copies of all the version of
+the specification are available at \url{http://dwarfstd.org}.
+
+All the data provided by debugging information is stored in a hierarchical
+tree-like structure, and each nodes of the tree is called a \gls{DIE}.
+Each DIE consists of an identifying tag, and a series of attributes. The tag
+specifies the class to which an entry belongs, and the attributes define the
+characteristics of the entry. An entry, or a group of entries together,
+provide a description of an entity in the corresponding source code. The
+entries are contained in the \verb|.debug_info| and \verb|.debug_types|
+sections of an object file.
+
+The attributes can reference another DIE, as shown in
+\autoref{fig:die-attr-references}, making it possible to create arbitrary
+links between nodes of the tree. Those explicit links are used extensively to
+group related entries together (for example the \verb|DW_TAG_formal_parameter|
+entries which describe the parameters of a function are chained using
+\verb|DW_AT_sibling| attributes), and to perform \gls{data-deduplication}
+of the debug information (for example, instead of making a new entry for
+the \mintinline{c}{int} type, only one is created and then referenced from other
+entries).
+
+\subsection{Debug Information Structure}
+
+Here is presented a simplified overview of the tree structure formed by the
+debug information entries of a program, which is enough for the goals of this
+project. For complete, detailed information, it is recommended to read the
+DWARFv4 Specification.
+% TODO: Bibliography reference ↑↑
+
+% The DWARF specification defines the following structure, starting at the
+% top level of the tree, which might have multiple trunks:
+%
+% \begin{itemize}
+%   \item An entry with tag \verb|DW_TAG_type_unit|
+%   \item The top-level debug information entry for  is the \gls{CU}. Each one
+%     is represented by a DIE with tag \verb|DW_TAG_compile_unit|, or
+%     \verb|DW_TAG_partial_unit| for object code resulting from an partial
+%     compilation. There will be at least one. A compilation unit entry own
+%     entries that represent declarations made in the corresponding compilation:
+%     \begin{itemize}
+%       \item \verb|DW_TAG_subprogram|
+%         \verb|DW_TAG_inlined_subroutine|
+%         \verb|DW_TAG_entry_point|
+%     \end{itemize}
+% \end{itemize}
+
+\subsubsection{Types}
+
+A types is represented as a DIE with one of the following tags:
+
+\begin{itemize}
+  \item \verb|DW_TAG_base_type|
+  \item \verb|DW_TAG_pointer_type|
+  \item \verb|DW_TAG_typedef|
+  \item \verb|DW_TAG_const_type|
+  \item \verb|DW_TAG_array_type|
+  \item \verb|DW_TAG_structure_type|
+  \item \verb|DW_TAG_union_type|
+  \item \verb|DW_TAG_enumeration_type|
+\end{itemize}
+
+
+%%%
+%%% TikZ styles for DIE diagrams
+%%%
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+
+\tikzstyle{datablob} = [
+  rectangle, rounded corners, drop shadow, draw=black, thick,
+  text centered, minimum height=2em, minimum width=3em, fill=blue!20,
+]
+\tikzstyle{die}      = [start chain=going below, node distance=1mm]
+\tikzstyle{dielabel} = [on chain]
+\tikzstyle{dieitems} = [
+  rectangle split, rectangle split parts=#1, rectangle split part align=left,
+  thick, draw, fill=blue!10, on chain,
+]
+\tikzstyle{enumitems} = [
+  rectangle split, rectangle split parts=#1, rectangle split part align=left,
+  thick, rounded corners,
+  color=black!50, fill=black!5, draw=black!50,
+  minimum height=3em,
+]
+\tikzstyle{valuefrom} = [draw=black!50, thick, dashed]
+\tikzstyle{arrow} = [draw, thick, >=triangle 45, ->]
+%%%
+%%% End TikZ styles for DIE diagrams
+%%%
+
+\minisec{Base Types (\autoref{fig:die-base-type})}
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[die]
+    \node[dielabel] (taglabel) {Tag};
+    \node[dieitems=1] (tag) { \verb|DW_TAG_base_type| };
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=2] (attributes) {
+        \verb|DW_AT_byte_size|
+      \nodepart{second}
+        \verb|DW_AT_encoding|
+    };
+
+    \node[enumitems=1] (sizevalues) [right=4cm of tag] { $n$ };
+    \node[enumitems=4] (encodingvalues) [below=1cm of sizevalues] {
+        \verb|DW_ATE_signed|
+      \nodepart{second}
+        \verb|DW_ATE_unsigned|
+      \nodepart{third}
+        \verb|DW_ATE_float|
+      \nodepart{fourth}
+        \verb|DW_ATE_boolean|
+    };
+
+    \path[valuefrom] (attributes.text east) -- (sizevalues.west);
+    \path[valuefrom] (attributes.second east) -- (encodingvalues.west);
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] [fit=(taglabel) (attributes) (tag)] {};
+    \end{pgfonlayer}
+  \end{tikzpicture}
+  \caption{DIE describing a base type.}
+  \label{fig:die-base-type}
+\end{figure}
+
+
+Base types are represented by DIEs with a \verb|DW_TAG_base_type| tag. This
+covers all the C/C++ numeric types: signed and unsigned integers, floating
+point types (\mintinline{c}{float}, \mintinline{c}{double}), the
+\mintinline{c}{char} type, and the new integer-based types of C99
+(\mintinline{c}{_Bool}, \mintinline{c}{int32_t}, etc.)
+
+The size of the values in is given using a \verb|DW_AT_byte_size| attribute,
+in bytes. Sizes are the same reported by the C \mintinline{c}{sizeof}
+operator. A \verb|DW_AT_encoding| attribute specifies how the values are
+used in the program. For example, an encoding of \verb|DW_ATE_boolean|
+corresponds with the \mintinline{c}{bool} (or \mintinline{c}{_Bool}) in the
+source program. The following table summarizes how C types are represented by
+a base type DIE for the \textit{x86\_64} architecture:
+
+\begin{center}
+  \begin{tabular}{lcl}
+    \toprule
+    C Type & \verb|DW_AT_byte_size| & \verb|DW_AT_encoding| \\
+    \midrule
+    \mintinline{c}{bool}               & 1 & \verb|DW_ATE_boolean| \\
+    \mintinline{c}{char}               & 1 & \verb|DW_ATE_signed_char| \\
+    \mintinline{c}{unsigned char}      & 1 & \verb|DW_ATE_unsigned_char| \\
+    \mintinline{c}{short int}          & 2 & \verb|DW_ATE_signed| \\
+    \mintinline{c}{unsigned short int} & 2 & \verb|DW_ATE_unsigned1| \\
+    \mintinline{c}{int}                & 4 & \verb|DW_ATE_signed| \\
+    \mintinline{c}{unsigned int}       & 4 & \verb|DW_ATE_unsigned| \\
+    \mintinline{c}{long int}           & 8 & \verb|DW_ATE_signed| \\
+    \mintinline{c}{unsigned long int}  & 8 & \verb|DW_ATE_unsigned| \\
+    \mintinline{c}{float}              & 4 & \verb|DW_ATE_float| \\
+    \mintinline{c}{double}             & 8 & \verb|DW_ATE_float| \\
+    \mintinline{c}{long double}        & 16& \verb|DW_ATE_float| \\
+    \bottomrule
+  \end{tabular}
+\end{center}
+
+The rest of C/C++ base types are defined as aliases of these
+using \mintinline{c}{typedef}.
+
+
+\minisec{Pointer Types (\autoref{fig:die-pointer-type})}
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[die]
+    \node[dielabel] (taglabel) {Tag};
+    \node[dieitems=1] (tag) {\verb|DW_TAG_pointer|};
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=1] (attributes) {\verb|DW_AT_type|};
+
+    \node[dielabel] (rtaglabel) [right=3cm of tag, yshift=-3.5mm] {Tag};
+    \node[dieitems=1] (rtag) {\verb|DW_TAG_pointer|};
+    \node[dielabel] (rattrlabel) {Attributes};
+    \node[dieitems=1] (rattributes) {\verb|DW_AT_type|};
+
+    \node[datablob] (basedie) [right=2cm of rattributes] {Type DIE};
+
+    \path[arrow] (rattributes.text east) -- (basedie);
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
+      \node[datablob] (rdie) [fit=(rtaglabel) (rattributes) (rtag)] {};
+    \end{pgfonlayer}
+
+    \path[arrow] (attributes.text east) -- (rdie.west);
+  \end{tikzpicture}
+  \caption{DIEs describing a Pointer-to-pointer-to type.}
+  \label{fig:die-pointer-type}
+\end{figure}
+
+Pointer types are represented by DIEs with a \verb|DW_TAG_pointer_type| tag.
+A lone \verb|DW_AT_type| attribute points to the DIE of the pointed-to type.
+This allows to represent pointers of to any type. Multiple levels of
+indirection are represented by chains of \verb|DW_TAG_pointer_type| DIEs.
+The example in \autoref{fig:die-pointer-type} exemplifies this situation, in
+what could be the representation of the \mintinline{c}{int**} when the
+rightmost “Type DIE” contains the information for the \mintinline{c}{int}
+type.
+
+
+\minisec{Constant Types}
+
+Flagging values of a type as constant is done in the same way as representing
+a pointer type: a DIE with a \verb|DW_TAG_const_type| contains
+a \verb|DW_AT_type| attribute with reference pointing to a type DIE.
+This way, the pointed type is marked as immutable.
+
+
+\minisec{Array Types (\autoref{fig:array-type-die})}
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[die]
+    \node[dielabel] (taglabel) {Tag};
+    \node[dieitems=1] (tag) {\verb|DW_TAG_array_type|};
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=2] (attributes) {
+        \verb|DW_AT_type|
+      \nodepart{two}
+        \verb|DW_AT_sibling|
+    };
+
+    \node[datablob] (basedie) [right=4cm of attrlabel] {Type DIE};
+
+    \node[dielabel] (rtaglabel) [below=1cm of basedie] {Tag};
+    \node[dieitems=1] (rtag) {\verb|DW_TAG_subrange_type|};
+    \node[dielabel] (rattrlabel) {Attributes};
+    \node[dieitems=2] (rattributes) {
+        \verb|DW_AT_count|
+      \nodepart{two}
+        \verb|DW_AT_byte_size|
+    };
+
+    \node[enumitems=1] (countvalue) [right=3cm of rattributes, yshift=0.8cm] {$ count $};
+    \node[enumitems=1] (countsize) [below=0.5cm of countvalue] {$ size $};
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
+      \node[datablob] (rdie) [fit=(rtaglabel) (rattributes) (rtag)] {};
+    \end{pgfonlayer}
+
+    \path[arrow] (attributes.text east) -- (basedie.west);
+    \path[arrow] (attributes.two east) -- (rdie.west);
+    \path[valuefrom] (rattributes.text east) -- (countvalue);
+    \path[valuefrom] (rattributes.two east) -- (countsize);
+  \end{tikzpicture}
+  \caption{DIEs describing an array type.}
+  \label{fig:array-type-die}
+\end{figure}
+
+
+Array types are represented by a DIE with a \verb|DW_TAG_array_type| tag.
+A \verb|DW_AT_type| attribute contains a reference to the type of the elements
+of the array. The space reserved for attribute values can be insufficient to
+store the number of elements in the array, so instead a chain of related DIEs
+is referenced using a \verb|DW_AT_sibling| attribute, and one of the elements
+in the chain is \verb|DW_TAG_subrange_type| DIE. The later specifies the
+$ size $ —using a \verb|DW_AT_byte_size| attribute— of the type needed to
+store the $count$ of items, and the location of the value itself using
+a \verb|DW_AT_count| attribute.
+
+
+\minisec{Type Aliases (\autoref{fig:typedef-die})}
+
+As a convenience, programming languages usually allow defining new user-defined
+names for types. This is particularly handy to avoid repeating complex type
+declarations in the code of a program. In C type aliases are introduced with
+the \mintinline{c}{typedef} keyword:
+
+\begin{minted}{c}
+/* "compare_function_t" is an alias to a function pointer type */
+typedef int (*compare_function_t) (const void* a, const void*b);
+\end{minted}
+
+A type alias is represented by a DIE with tag
+\verb|DW_TAG_typedef|\footnote{The name of the tag hints that
+the DWARF format was designed with the C language in mind.} tag. The aliased
+type is referenced using a \verb|DW_AT_type| attribute, and
+a \verb|DW_AT_name| attribute provides the $ name $ of the aliased type.
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[die]
+    \node[dielabel] (taglabel) {Tag};
+    \node[dieitems=1] (tag) {\verb|DW_TAG_typedef|};
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=2] (attributes)
+      { \verb|DW_AT_name| \nodepart{two} \verb|DW_AT_type|};
+
+    \node[enumitems=1] (typename) [right=4cm of attrlabel, yshift=-2mm] {$ name $};
+    \node[datablob] (basedie) [below=0.5cm of typename] {Type DIE};
+
+    \path[valuefrom] (attributes.text east) -- (typename);
+    \path[arrow] (attributes.two east) -- (basedie);
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
+    \end{pgfonlayer}
+  \end{tikzpicture}
+  \caption{DIE describing a type alias.}
+  \label{fig:typedef-die}
+\end{figure}
+
+
+\minisec{Structured Types (\autoref{fig:struct-type-die})}
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[die]
+    \node[dielabel] (taglabel) {Tag};
+    \node[dieitems=1] (tag) {\verb|DW_TAG_structure_type|};
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=3] (attributes) {
+        \verb|DW_AT_byte_size|
+      \nodepart{two}
+        \verb|DW_AT_name|
+      \nodepart{three}
+        \verb|DW_AT_sibling|
+    };
+
+    \node[enumitems=1] (sizevalue) [right=4cm of attrlabel, yshift=-6mm] {$ size $};
+    \node[enumitems=1] (namevalue) [below=5mm of sizevalue] {$ name $};
+
+    \path[valuefrom] (attributes.text east) -- (sizevalue);
+    \path[valuefrom] (attributes.two east) -- (namevalue);
+
+    \node[dielabel] (rtaglabel) [yshift=-1cm] {Tag};
+    \node[dieitems=1] (rtag) {\verb|DW_TAG_member|};
+    \node[dielabel] (rattrlabel) {Attributes};
+    \node[dieitems=4] (rattributes) {
+        \verb|DW_AT_type|
+      \nodepart{two}
+        \verb|DW_AT_name|
+      \nodepart{three}
+        \verb|DW_AT_data_member_location|
+      \nodepart{four}
+        \verb|DW_AT_sibling|
+    };
+
+    \node[datablob] (nextmemberdie) [on chain, yshift=-9mm] {Next Member DIE};
+    \node (memberellipsis) [on chain, yshift=-9mm] { ... };
+    \path[arrow] (rattributes.four south) -- (nextmemberdie.north);
+    \path[arrow] (nextmemberdie.south) -- (memberellipsis.north);
+
+    \node[datablob] (basedie) [right=4cm of rattrlabel, yshift=-2mm] {Type DIE};
+
+    \node[enumitems=1] (mname) [below=5mm of basedie] {$ membername $};
+    \node[enumitems=1] (moffset) [below=5mm of mname] {$ offset $};
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
+      \node[datablob] (rdie) [fit=(rtaglabel) (rattributes) (rtag)] {};
+    \end{pgfonlayer}
+
+    \path[arrow] (attributes.three south) -- (rdie.north);
+    \path[arrow] (rattributes.text east) -- (basedie.west);
+    \path[valuefrom] (rattributes.two east) -- (mname);
+    \path[valuefrom] (rattributes.three east) -- (moffset);
+  \end{tikzpicture}
+  \caption{DIEs describing a structured type}
+  \label{fig:struct-type-die}
+\end{figure}
+
+Structured types, also known as \emph{record types} or \emph{compound data
+types} depending on the programming languages, are used-defined data
+structures which contain a collection of related elements, which can be
+accessed using a numeric index or (most commonly) by names given to them. Each
+element may also be called \emph{field} or \emph{member}. In C records are
+defined using the \mintinline{c}{struct} keyword:
+
+\begin{minted}{c}
+  struct Point {
+    int x;  /* First member  */
+    int y;  /* Second member */
+  };
+\end{minted}
+
+A record type is described using a set of related DIEs. At the top level,
+a DIE with tag \verb|DW_TAG_structure_type| provides the size of the record
+type, by means of a \verb|DW_AT_byte_size| attribute, and the name of the
+record type using a \verb|DW_AT_name| attribute.
+
+In order to describe the members, a DIE with tag \verb|DW_TAG_member| is
+used for each of them. These DIEs contain a \verb|DW_AT_type| attribute
+which references the DIE of the member type, a \verb|DW_AT_name| attribute
+with name of the member, an attribute of type
+\verb|DW_AT_data_member_location| specifies the $ offset $ of the member in
+memory, counted from the starting address of the record. The member DIEs are
+linked from the top level DIE using a chain of \verb|DW_AT_sibling| links.
+
+
+\minisec{Union Types}
+
+Union types use the same structure of DIEs as record types, with a coupld of
+small differeces: the tag for the top-level DIE is \verb|DW_TAG_union_type|,
+and the \verb|DW_AT_byte_size| attribute indicates the size of the
+\emph{largest member type}.
+
+
+\minisec{Enumeration Types (\autoref{fig:enum-type-die})}
+
+Enumeration types 
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[die]
+    \node[dielabel] (taglabel) {Tag};
+    \node[dieitems=1] (tag) {\verb|DW_TAG_enumeration_type|};
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=3] (attributes) {
+        \verb|DW_AT_byte_size|
+      \nodepart{two}
+        \verb|DW_AT_name|
+      \nodepart{three}
+        \verb|DW_AT_sibling|
+    };
+
+    \node[enumitems=1] (sizevalue) [right=4cm of attrlabel, yshift=-6mm] {$ size $};
+    \node[enumitems=1] (namevalue) [below=5mm of sizevalue] {$ name $};
+
+    \path[valuefrom] (attributes.text east) -- (sizevalue);
+    \path[valuefrom] (attributes.two east) -- (namevalue);
+
+    \node[dielabel] (rtaglabel) [yshift=-1cm] {Tag};
+    \node[dieitems=1] (rtag) {\verb|DW_TAG_enumerator|};
+    \node[dielabel] (rattrlabel) {Attributes};
+    \node[dieitems=2] (rattributes) {
+        \verb|DW_AT_name|
+      \nodepart{two}
+        \verb|DW_AT_const_value|
+    };
+
+    \node[datablob] (nextmemberdie) [on chain, yshift=-9mm] {Next Enumerator DIE};
+    \node (memberellipsis) [on chain, yshift=-9mm] { ... };
+    \path[arrow] (rattributes.four south) -- (nextmemberdie.north);
+    \path[arrow] (nextmemberdie.south) -- (memberellipsis.north);
+
+    \node[enumitems=1] (mname) [below=3.7cm of namevalue] {$ membername $};
+    \node[enumitems=1] (moffset) [below=5mm of mname] {$ offset $};
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
+      \node[datablob] (rdie) [fit=(rtaglabel) (rattributes) (rtag)] {};
+    \end{pgfonlayer}
+
+    \path[arrow] (attributes.three south) -- (rdie.north);
+    \path[valuefrom] (rattributes.text east) -- (mname.west);
+    \path[valuefrom] (rattributes.three east) -- (moffset.west);
+  \end{tikzpicture}
+  \caption{DIEs describing an enumeration type}
+  \label{fig:enum-type-die}
+\end{figure}
+
+%%%
+
+
+\tikzstyle{datain} = [
+  draw=black!80,
+  thick,
+  fill=blue!10,
+  rectangle,
+  text centered,
+  minimum height=1.3em,
+  text width=10em,
+]
+\begin{figure}
+  \centering
+  \begin{tikzpicture}
+    \node (dielabel) {DIE};
+
+    \node (taglabel) [below of=dielabel] {Tag};
+    \node[datain] (tagvalue) [below=0cm of taglabel] {\verb|DW_TAG_subprogram|};
+
+    \node (attrlabel) [below of=tagvalue] {Attributes};
+    \node[datain] (attr1) [below=0cm of attrlabel] {\verb|DW_AT_type|};
+    \node[datain] (attr2) [below=0cm of attr1] {\verb|DW_AT_sibling|};
+    \node (attrellipsis) [below=0cm of attr2] { ... };
+    \node[datain] (attrN) [below=0cm of attrellipsis] {\verb|DW_AT_...|};
+
+    \node[datablob] (refdie2) [right=4cm of attr2] { };
+    \node[datablob] (refdie1) [above of=refdie2] { };
+    \node  (refdieellipsis) [below=1mm of refdie2] { ... };
+    \node[datablob] (refdieN) [below=1mm of refdieellipsis] { };
+
+    \node (refdieslabel) [below of=refdieN] {DIEs referenced by offset};
+
+    \path[arrow, *->] (attr1.east) -- (refdie1.west);
+    \path[arrow, *->] (attr2.east) -- (refdie2.west);
+    \path[arrow, *->] (attrN.east) -- (refdieN.west);
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (bgbox) [fit=(taglabel) (attrN)] { };
+      \node[fill=yellow!20, rectangle, rounded corners] (refdiesbg)
+        [fit=(refdieslabel) (refdie1)] { };
+    \end{pgfonlayer}
+  \end{tikzpicture}
+
+  \caption{DIE attribute references.}
+  \label{fig:die-attr-references}
+\end{figure}
+
+
+\section{Design}
+
+
+\tikzstyle{component} = [
+  draw=black,
+  thick,
+  fill=green!10,
+  rectangle,
+  text centered,
+  minimum height=2em,
+  text width=6em,
+  rounded corners,
+  drop shadow,
+]
+\tikzstyle{uses} = [
+  draw,
+  very thick,
+  >=triangle 45,
+  ->,
+  dashed,
+]
+\tikzstyle{contains} = [
+  draw,
+  thick,
+  >=triangle 45,
+  -*,
+]
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[node distance=2cm]
+
+    \node[component] (library) {Library};
+    \node[component] (typecache) [above of=library]   {Type Cache};
+    \node[component] (ctype)     [right=1cm of library]   {CType};
+    \node[component] (function)  [right=1cm of ctype]     {Function};
+    \node[component] (variable)  [right=1cm of function]  {Variable};
+    \node[component] (typeinfo)  [above of=function]  {Type Information};
+    \node[datain]    (dwarf)     [above=1cm of typecache]
+                                  {DWARF debugging information};
+
+    \node (luadata) [below right of=ctype] {Visible in Lua as userdata};
+    \node (elf)     [above=0cm of dwarf]   {ELF shared object};
+
+    \path[uses] (function) -- (typeinfo);
+    \path[uses] (variable) -- (typeinfo);
+    \path[uses] (ctype) -- (typeinfo);
+    \path[uses] (typecache) -- (dwarf);
+    \path[contains] (library) -- (typecache);
+    \path[contains] (typecache) -- (typeinfo);
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (elfbox) [fit=(dwarf) (elf), drop shadow] {};
+      \node[fill=yellow!20, rectangle, rounded corners] (wrappers)
+      [fit=(library) (variable) (function) (luadata)] { };
+    \end{pgfonlayer}
+  \end{tikzpicture}
+  \caption{Architecture of \Eris*.}
+  \label{fig:eris-architecture}
+\end{figure}

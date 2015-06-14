@@ -1,4 +1,4 @@
-% vim: ft=tex
+% vim: ft=tex spell spelllang=en
 
 \chapter{Implementation}
 
@@ -10,25 +10,26 @@
 	\toprule
 	Component & Version  & Required & Optional & Bundled \\
 	\midrule
-	Lua        & 5.3      & \Tick    &          & \Tick   \\
-	\Ldwarf*   & 20150507 & \Tick    &          & \Tick   \\
-	\Lelf*     & 0.152    & \Tick    &          &         \\
-	\Lreadline*& 5.0      &          & \Tick    &         \\
-	\Lffi*     & 3.1      & \Tick    &          &         \\
+	Lua             & 5.3      & \Tick    &          & \Tick   \\
+	\verb|libdwarf| & 20150507 & \Tick    &          & \Tick   \\
+	\verb|libelf|   & 0.152    & \Tick    &          &         \\
+	\verb|readline| & 5.0      &          & \Tick    &         \\
+	\verb|libffi|   & 3.1      & \Tick    &          &         \\
 	\bottomrule
     \end{tabular}
     \caption{Dependencies}
     \label{tab:eris-dependencies}
 \end{table}
 
-\autoref{tab:eris-dependencies} shows which dependencies are expected to be
-installed in the system.
-The items marked (\Tick) as \emph{bundled} are not including in the source
-repository, but the build system includes support for downloading tarballs
-with their source code and doing a local build that will be used locally
-In the case of using a bundled copy of \Ldwarf*, it will be statically linked.
-See~\nameref{sec:running-configure} for details on how to use the
-bundled libraries.
+\autoref{tab:eris-dependencies} shows dependencies expected to be installed in
+the system. The items marked (\Tick) as \emph{bundled} are not including in
+the source repository, but the build system includes support for downloading
+tarballs with the source code and doing a local build. When enabled, bundled
+dependencies will be automatically downloaded, built, and used, instead
+instead of the versions provided by the system. In the case of using
+\verb|libdward| bundled, it will be statically linked.
+See~\nameref{sec:running-configure} for instructions for enabling bundled
+libraries.
 
 \begin{table}
     \begin{tabular}{ccp{0.4\textwidth}}
@@ -36,23 +37,21 @@ bundled libraries.
 	Distribution & Installation Command & Packages \\
 	\midrule
 	Debian, Ubuntu\footnote{Those systems do not provide Lua 5.3 packages
-	    at the time of writing, therefore is recommended
-	    to~\hyperref{sec:running-configure}{configure the build} to use
-	    the bundled version.}
-	& \texttt{apt-get install} &
-	    \texttt{libdwarf-dev ninja-build}
-	    \\
-	Arch Linux & \texttt{pacman -S} &
-	    \texttt{libdwarf ninja lua}
-	    \\
+	at the time of writing, therefore usage of of the bundled version is
+	recommended. See~\autoref{sec:running-configure} for instructions.} &
+	    \verb|{apt-get install| &
+	    \verb|libdwarf-dev| \verb|ninja-build| \\
+	Arch Linux & \verb|pacman -S| & \verb|libdwarf| \verb|ninja| \verb|lua| \\
 	\bottomrule
     \end{tabular}
-    \caption{Dependency packages in popular \GnuLinux* distributions.}
+    \caption{Dependency packages in popular GNU/Linux distributions.}
     \label{tab:distro-dependency-packages}
 \end{table}
 
-\autoref{tab:distro-dependency-packages} shows which packages from
-popular \GnuLinux* distributions provide the required dependencies.
+\autoref{tab:distro-dependency-packages} shows required packages as provided
+by popular GNU/Linux distributions. Some versions of Debian (and derivatives
+like Ubuntu) include only a static version of \verb|libdwarf| in the packages,
+most likely not built as \gls{PIC}, which is a requirement.
 
 \section{Project Structure}
 
@@ -68,7 +67,7 @@ The \Eris* source code
 .3     *.lua \DTcomment{Module usage examples}.
 .2   \DtFolder{tools/} \DTcomment{Build \& test utilities}.
 .3     \DtFolder{ninja/} \DTcomment{Ninja build support files}.
-.3     \DtFolder{make/} \DTcomment{\GnuMake* build support files}.
+.3     \DtFolder{make/} \DTcomment{GNU Make build support files}.
 .2   \DtFolder{test/}.
 .3     *.lua \DTcomment{Unit tests}.
 .2   uthash.h \DTcomment{Copy of UT-hash}.

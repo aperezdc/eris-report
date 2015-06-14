@@ -1,4 +1,53 @@
-% vim:ft=tex:
+% vim: ft=tex spell spelllang=en
+%
+% Glossary/Acronyms
+%
 
-\cleardoublepage
-\chapter{Glossary}
+\newglossaryentry{transpiler}{
+	name=transpiler,
+	description={Type of compiler that takes source code of a programming
+		language as its input, and produces a different source code as
+		output, usually in a different programming language.  Also known
+		as \emph{source-to-source compiler}, or \emph{transcompiler}},
+}
+
+\newglossaryentry{lua-users-wiki}{
+	name={Lua-Users Wiki},
+	description={Community operated \emph{wiki} site which contains resources
+		for Lua development, written by users of the programming language
+		themselves. URL address: \url{http://lua-users.org/wiki}},
+}
+
+\newglossaryentry{data-deduplication}{
+	name={data deduplication},
+	description={any technique which eliminates duplicate copies of repeating
+		data in order to improve storage utilization},
+}
+
+\newglossaryentry{gls-TUE}{
+	name={Type Unit Entry},
+	description={A particular kind of DWARF DIE that contains information
+		about a data type},
+}
+\newacronym[see={[Glossary:]{gls-TUE}}]{TUE}{TUE}
+	{Type Unit Entry\glsadd{gls-TUE}}
+
+
+\newacronym{ELF}{ELF}{Executable and Linkable Format}
+\newacronym{DWARF}{DWARF}{Debugging With Attributed Record Formats}
+\newacronym{JIT}{JIT}{Just-In-Time}
+\newacronym{FFI}{FFI}{Foreign Function Interface}
+\newacronym{DIE}{DIE}{Debugging Information Entry}
+\newacronym{CU}{CU}{Compilation Unit}
+\newacronym{FDL}{FDL}{Free Documentation License}
+\newacronym{API}{API}{Application Programmin Interface}
+\newacronym{PIC}{PIC}{Position-Independent Code}
+
+%
+% Those are just simple command-abbreviations to format pieces of text which
+% should be always displayed with the same formatting. Using a macro ensures
+% that, and makes it easier to come back here and change the formatting for
+% all occurrences, if needed.
+%
+\def\Eris*{\textsc{\sffamily Eris}}
+

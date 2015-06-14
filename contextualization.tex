@@ -11,8 +11,17 @@ languages and tools of the present times, all of them enable humans to
 
 %% TODO
 
+\section{Dynamic Programming Languages}
 
-\section{The Lua programming language}
+With  of faster computer
+
+
+\subsection{Virtual Machines}
+
+\subsection{JIT Compilers}
+
+
+\subsection{The Lua programming language}
 
 The Lua language is a “powerful, fast, lightweight, embeddable scripting
 language”\footnote{\url{http://www.lua.org/about.html}}. It was initially
@@ -21,6 +30,48 @@ created as a data description language at
 purpose programming language. It has been used in industrial applications
 (e.g. Adobe Lightroom) and it has seen widespread usage in the video games
 industry.
+
+\section{Binding Native Code to Lua}
+
+\subsection{Lua C API}
+	\label{sec:lua-c-api}
+
+% Plain API
+% API wrappers
+
+\subsection{Binding Generators}
+
+Binding generators are tools that can be used to create a binding to a library
+in an automated way. Often they fall into the category of \glspl{transpiler}:
+they take as input the source code of the code to generate a binding for,
+and generate a new set of source files which contain the code of the binding.
+This set of source files are themselves compiled into a loadable module for
+the target programming language or virtual machine, making it a
+\emph{build-time} solution.
+
+More than often, binding generators do \emph{not} include a full parser for
+the origin programming language, and they require to be fed a simplified
+version of the code being wrapped. This can be a nuisance for code bases which
+use complex language constructs unsupported by the binding generator.
+
+% \minisec{Example: SWIG}
+%
+% The most widely known Open Source binding generator is probably
+% SWIG\footnote{\url{http://swig.org}}, which supports creating bindings for
+% multiple programming languages — since version 1.3.26 Lua is just one of the
+% supported targets. SWIG has the ability of reading C/C++ header files as
+% input, and it includes a fairly complete C/C++ parser.
+
+
+\subsection{Foreign Function Interfaces}
+
+
+
+% Examples:
+%
+% GObject-Introspection
+% LuaJIT FFI
+% Standalone FFI module
 
 \section{Executable Formats}
 
@@ -34,8 +85,8 @@ it has been adopted by many Unix-like (Solaris, most of the BSD variants,
 GNU/Linux), and non-Unix operating systems (most notably, OpenVMS, BeOS, and
 its successor Haiku).
 
-
 \subsection{DWARF}
 
 The DWARF \href{http://dwarfstd.org}{specification}
+
 
