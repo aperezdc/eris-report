@@ -13,3 +13,5 @@ _minted-memoir/
 *.glsdefs
 *.alg
 *.md5
+*.xdy
+*.gl[gos]

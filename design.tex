@@ -20,56 +20,6 @@ provide a description of an entity in the corresponding source code. The
 entries are contained in the \verb|.debug_info| and \verb|.debug_types|
 sections of an object file.
 
-The attributes can reference another DIE, as shown in
-\autoref{fig:die-attr-references}, making it possible to create arbitrary
-links between nodes of the tree. Those explicit links are used extensively to
-group related entries together (for example the \verb|DW_TAG_formal_parameter|
-entries which describe the parameters of a function are chained using
-\verb|DW_AT_sibling| attributes), and to perform \gls{data-deduplication}
-of the debug information (for example, instead of making a new entry for
-the \mintinline{c}{int} type, only one is created and then referenced from other
-entries).
-
-\subsection{Debug Information Structure}
-
-Here is presented a simplified overview of the tree structure formed by the
-debug information entries of a program, which is enough for the goals of this
-project. For complete, detailed information, it is recommended to read the
-DWARFv4 Specification.
-% TODO: Bibliography reference ↑↑
-
-% The DWARF specification defines the following structure, starting at the
-% top level of the tree, which might have multiple trunks:
-%
-% \begin{itemize}
-%   \item An entry with tag \verb|DW_TAG_type_unit|
-%   \item The top-level debug information entry for  is the \gls{CU}. Each one
-%     is represented by a DIE with tag \verb|DW_TAG_compile_unit|, or
-%     \verb|DW_TAG_partial_unit| for object code resulting from an partial
-%     compilation. There will be at least one. A compilation unit entry own
-%     entries that represent declarations made in the corresponding compilation:
-%     \begin{itemize}
-%       \item \verb|DW_TAG_subprogram|
-%         \verb|DW_TAG_inlined_subroutine|
-%         \verb|DW_TAG_entry_point|
-%     \end{itemize}
-% \end{itemize}
-
-\subsubsection{Types}
-
-A types is represented as a DIE with one of the following tags:
-
-\begin{itemize}
-  \item \verb|DW_TAG_base_type|
-  \item \verb|DW_TAG_pointer_type|
-  \item \verb|DW_TAG_typedef|
-  \item \verb|DW_TAG_const_type|
-  \item \verb|DW_TAG_array_type|
-  \item \verb|DW_TAG_structure_type|
-  \item \verb|DW_TAG_union_type|
-  \item \verb|DW_TAG_enumeration_type|
-\end{itemize}
-
 
 %%%
 %%% TikZ styles for DIE diagrams
@@ -96,9 +46,123 @@ A types is represented as a DIE with one of the following tags:
 ]
 \tikzstyle{valuefrom} = [draw=black!50, thick, dashed]
 \tikzstyle{arrow} = [draw, thick, >=triangle 45, ->]
+\tikzstyle{datain} = [
+  draw=black!80, thick, fill=blue!10, rectangle,
+  text centered, minimum height=1.3em, text width=10em,
+]
 %%%
 %%% End TikZ styles for DIE diagrams
 %%%
+
+\begin{figure}
+  \centering
+  \begin{tikzpicture}[die]
+    \node[dielabel] (taglabel) {Tag};
+    \node[dieitems=1] (tag) {\verb|DW_TAG_subprogram|};
+
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=3] (attributes) {
+        \verb|DW_AT_type|
+      \nodepart{two}
+        \verb|DW_AT_sibling|
+      \nodepart{three}
+        \verb|DW_AT_…|
+    };
+
+    \node[datablob] (refdie2) [right=4cm of attributes] { };
+    \node[datablob] (refdie1) [above=1mm of refdie2] { };
+    \node  (refdieellipsis)   [below=1mm of refdie2] { ... };
+    \node[datablob] (refdieN) [below=1mm of refdieellipsis] { };
+
+    \node (refdieslabel) [above=3mm of refdie1] {DIEs referenced by offset};
+
+    \path[arrow] (attributes.text east) -- (refdie1.west);
+    \path[arrow] (attributes.two east) -- (refdie2.west);
+    \path[arrow] (attributes.three east) -- (refdieN.west);
+
+    \begin{pgfonlayer}{background}
+      \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] { };
+      \node[fill=yellow!20, rectangle, rounded corners] (refdiesbg)
+        [fit=(refdieslabel) (refdieN)] { };
+    \end{pgfonlayer}
+
+    \node (dielabel) [below=3mm of die] {DIE};
+  \end{tikzpicture}
+
+  \caption{DIE attribute references.}
+  \label{fig:die-attr-references}
+\end{figure}
+
+
+The attributes can reference another DIE, as shown in
+\autoref{fig:die-attr-references}, making it possible to create arbitrary
+links between nodes of the tree. Those explicit links are used extensively to
+group related entries together (for example the \verb|DW_TAG_formal_parameter|
+entries which describe the parameters of a function are chained using
+\verb|DW_AT_sibling| attributes), and to perform \gls{data-deduplication}
+of the debug information (for example, instead of making a new entry for
+the \mintinline{c}{int} type, only one is created and then referenced from other
+entries).
+
+\subsection{Debug Information Structure}
+
+This section provides simplified overview of the tree structure formed by the
+debug information entries of a program, which is enough for the goals of this
+project. For complete, detailed information, it is recommended to read the
+DWARFv4 Specification.
+% TODO: Bibliography reference ↑↑
+
+
+\subsubsection{Location of the Debug Information}
+
+\Gls{ELF} objects have the ability of describing their contents using
+\emph{segments}, and \emph{sections}. Segments contain information used at
+runtime for the execution of the code, and sections contain data about the
+code itself. Sections contain data used \emph{offline} (i.e. not at runtime).
+Sections have arbitrary names and contents. Debugging information is not
+strictly needed at runtime for the execution of the program: it is considered
+ancillary, and is stored in sections.
+
+As per the specification, the DWARF debugging information must be stored in
+the ELF objects in sections with the \verb|.debug_| prefix. Each one of those
+sections stores a particular kind of information, as seen on
+\autoref{tab:elf-dwarf-sections}. 
+
+
+\begin{table}
+  \centering\small
+  \begin{tabular}{lp{0.65\textwidth}}
+    \toprule
+    Section & Contents \\
+    \midrule
+    \verb|.debug_types| & Stores DIEs for types. \\
+    \verb|.debug_info| & Stores DIEs for executable program code (functions, mostly) \\
+    \verb|.debug_line| & Maps of object code positions to source code line numbers \\
+    \verb|.debug_pubnames| & Public function names and entry offsets in \verb|.debug_info| \\
+    \verb|.debug_pubtypes| & Public type names and entry offsets in \verb|.debug_types| \\
+    \verb|.debug_str| & String data (e.g. type, variable and function names) \\
+    \bottomrule
+  \end{tabular}
+  \caption{Main ELF sections used to store DWARF debugging information}
+  \label{tab:elf-dwarf-sections}
+\end{table}
+
+
+\subsubsection{Types}
+
+A types is represented as a DIE with one of the following tags:
+
+\begin{itemize}
+  \item \verb|DW_TAG_base_type|
+  \item \verb|DW_TAG_pointer_type|
+  \item \verb|DW_TAG_typedef|
+  \item \verb|DW_TAG_const_type|
+  \item \verb|DW_TAG_array_type|
+  \item \verb|DW_TAG_structure_type|
+  \item \verb|DW_TAG_union_type|
+  \item \verb|DW_TAG_enumeration_type|
+\end{itemize}
+
 
 \minisec{Base Types (\autoref{fig:die-base-type})}
 
@@ -114,7 +178,7 @@ A types is represented as a DIE with one of the following tags:
         \verb|DW_AT_encoding|
     };
 
-    \node[enumitems=1] (sizevalues) [right=4cm of tag] { $n$ };
+    \node[enumitems=1] (sizevalues) [right=4cm of tag] {\emph{size}};
     \node[enumitems=4] (encodingvalues) [below=1cm of sizevalues] {
         \verb|DW_ATE_signed|
       \nodepart{second}
@@ -249,8 +313,8 @@ This way, the pointed type is marked as immutable.
         \verb|DW_AT_byte_size|
     };
 
-    \node[enumitems=1] (countvalue) [right=3cm of rattributes, yshift=0.8cm] {$ count $};
-    \node[enumitems=1] (countsize) [below=0.5cm of countvalue] {$ size $};
+    \node[enumitems=1] (countvalue) [right=3cm of rattributes, yshift=0.8cm] {\emph{count}};
+    \node[enumitems=1] (countsize) [below=0.5cm of countvalue] {\emph{size}};
 
     \begin{pgfonlayer}{background}
       \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
@@ -273,8 +337,8 @@ of the array. The space reserved for attribute values can be insufficient to
 store the number of elements in the array, so instead a chain of related DIEs
 is referenced using a \verb|DW_AT_sibling| attribute, and one of the elements
 in the chain is \verb|DW_TAG_subrange_type| DIE. The later specifies the
-$ size $ —using a \verb|DW_AT_byte_size| attribute— of the type needed to
-store the $count$ of items, and the location of the value itself using
+\emph{size} —using a \verb|DW_AT_byte_size| attribute— of the type needed to
+store the \emph{count} of items, and the location of the value itself using
 a \verb|DW_AT_count| attribute.
 
 
@@ -294,7 +358,7 @@ A type alias is represented by a DIE with tag
 \verb|DW_TAG_typedef|\footnote{The name of the tag hints that
 the DWARF format was designed with the C language in mind.} tag. The aliased
 type is referenced using a \verb|DW_AT_type| attribute, and
-a \verb|DW_AT_name| attribute provides the $ name $ of the aliased type.
+a \verb|DW_AT_name| attribute provides the \emph{name} of the aliased type.
 
 \begin{figure}
   \centering
@@ -305,7 +369,7 @@ a \verb|DW_AT_name| attribute provides the $ name $ of the aliased type.
     \node[dieitems=2] (attributes)
       { \verb|DW_AT_name| \nodepart{two} \verb|DW_AT_type|};
 
-    \node[enumitems=1] (typename) [right=4cm of attrlabel, yshift=-2mm] {$ name $};
+    \node[enumitems=1] (typename) [right=4cm of attrlabel, yshift=-2mm] {\emph{name}};
     \node[datablob] (basedie) [below=0.5cm of typename] {Type DIE};
 
     \path[valuefrom] (attributes.text east) -- (typename);
@@ -336,8 +400,8 @@ a \verb|DW_AT_name| attribute provides the $ name $ of the aliased type.
         \verb|DW_AT_sibling|
     };
 
-    \node[enumitems=1] (sizevalue) [right=4cm of attrlabel, yshift=-6mm] {$ size $};
-    \node[enumitems=1] (namevalue) [below=5mm of sizevalue] {$ name $};
+    \node[enumitems=1] (sizevalue) [right=4cm of attrlabel, yshift=-6mm] {\emph{size}};
+    \node[enumitems=1] (namevalue) [below=5mm of sizevalue] {\emph{name}};
 
     \path[valuefrom] (attributes.text east) -- (sizevalue);
     \path[valuefrom] (attributes.two east) -- (namevalue);
@@ -362,8 +426,8 @@ a \verb|DW_AT_name| attribute provides the $ name $ of the aliased type.
 
     \node[datablob] (basedie) [right=4cm of rattrlabel, yshift=-2mm] {Type DIE};
 
-    \node[enumitems=1] (mname) [below=5mm of basedie] {$ membername $};
-    \node[enumitems=1] (moffset) [below=5mm of mname] {$ offset $};
+    \node[enumitems=1] (mname) [below=5mm of basedie] {\emph{membername}};
+    \node[enumitems=1] (moffset) [below=5mm of mname] {\emph{offset}};
 
     \begin{pgfonlayer}{background}
       \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
@@ -402,9 +466,36 @@ In order to describe the members, a DIE with tag \verb|DW_TAG_member| is
 used for each of them. These DIEs contain a \verb|DW_AT_type| attribute
 which references the DIE of the member type, a \verb|DW_AT_name| attribute
 with name of the member, an attribute of type
-\verb|DW_AT_data_member_location| specifies the $ offset $ of the member in
+\verb|DW_AT_data_member_location| specifies the \emph{offset} of the member in
 memory, counted from the starting address of the record. The member DIEs are
 linked from the top level DIE using a chain of \verb|DW_AT_sibling| links.
+
+Some programming languages allow defining \emph{opaque} record types. The
+layout and fields of the type are only visible in the program module where the
+type is implemented. Such type is defined in C by omitting the specification
+of the \mintinline{c}{struct} fields in \verb|.h| a header, and writing its
+complete description in the \verb|.c| implementation:
+
+\begin{minted}{c}
+  /* File: opaque.h */
+  typedef struct _Opaque Opaque;
+  ...
+
+  /* File: opaque.c */
+  struct _Opaque {
+    uint8_t data_blob[100];
+    ...
+  };
+  ...
+\end{minted}
+
+In this case, an additional DIE with tag \verb|DW_TAG_structure_type| is
+present, \emph{without} specifying the size of the data type with
+a \verb|DW_AT_byte_size| attribute. Instead, a \verb|DW_AT_declaration|
+attribute is added, flagging the type as declared, but not neccessarily
+defined. Optionally, if the complete definition of the is known by the
+compiler, it might adds \verb|DW_AT_specification| attribute pointing to the
+top level DIE which describes the type in full.
 
 
 \minisec{Union Types}
@@ -417,7 +508,17 @@ and the \verb|DW_AT_byte_size| attribute indicates the size of the
 
 \minisec{Enumeration Types (\autoref{fig:enum-type-die})}
 
-Enumeration types 
+The representation of enumeration shares some similarities with the
+representation of record and enumeration types: a top level DIE with tag
+\verb|DW_TAG_enumeration_type| describes the size of the integral type needed
+for values of the enumerated type using a \verb|DW_AT_byte_size| attribute,
+and a \verb|DW_AT_name| attribute contains the name of the type.
+
+The set of values are describes by a DIE each, with tag
+\verb|DW_TAG_enumerator|. Enumerators contain a \verb|DW_AT_name| attribute
+with the name of the enumerator, and its associated value in
+a \verb|DW_AT_constvalue| attribute.
+
 
 \begin{figure}
   \centering
@@ -433,8 +534,8 @@ Enumeration types
         \verb|DW_AT_sibling|
     };
 
-    \node[enumitems=1] (sizevalue) [right=4cm of attrlabel, yshift=-6mm] {$ size $};
-    \node[enumitems=1] (namevalue) [below=5mm of sizevalue] {$ name $};
+    \node[enumitems=1] (sizevalue) [right=4cm of attrlabel, yshift=-6mm] {\emph{size}};
+    \node[enumitems=1] (namevalue) [below=5mm of sizevalue] {\emph{name}};
 
     \path[valuefrom] (attributes.text east) -- (sizevalue);
     \path[valuefrom] (attributes.two east) -- (namevalue);
@@ -453,8 +554,8 @@ Enumeration types
     \path[arrow] (rattributes.four south) -- (nextmemberdie.north);
     \path[arrow] (nextmemberdie.south) -- (memberellipsis.north);
 
-    \node[enumitems=1] (mname) [below=3.7cm of namevalue] {$ membername $};
-    \node[enumitems=1] (moffset) [below=5mm of mname] {$ offset $};
+    \node[enumitems=1] (mname) [below=3.7cm of namevalue] {\emph{membername}};
+    \node[enumitems=1] (moffset) [below=5mm of mname] {\emph{value}};
 
     \begin{pgfonlayer}{background}
       \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
@@ -463,59 +564,127 @@ Enumeration types
 
     \path[arrow] (attributes.three south) -- (rdie.north);
     \path[valuefrom] (rattributes.text east) -- (mname.west);
-    \path[valuefrom] (rattributes.three east) -- (moffset.west);
+    \path[valuefrom] (rattributes.two east) -- (moffset.west);
   \end{tikzpicture}
   \caption{DIEs describing an enumeration type}
   \label{fig:enum-type-die}
 \end{figure}
 
-%%%
 
+\minisec{Functions}
 
-\tikzstyle{datain} = [
-  draw=black!80,
-  thick,
-  fill=blue!10,
-  rectangle,
-  text centered,
-  minimum height=1.3em,
-  text width=10em,
-]
+The representation functions using DIEs uses the same structure as record
+and enumeration types: the top level entry contains general information about
+the function itself, using attributes, plus a link to a chains of DIEs.
+Function entries come in different flavors, depending on their tag:
+
+\begin{itemize}
+  \item \verb|DW_TAG_entry_point| \hfill \\
+    Describes a piece of executable that can be invoked in the same way as
+    a function, which does not have entity as a function in the source
+    program. For example, this can be used by a \gls{pascal} compiler to
+    represent the code inside the \mintinline{pascal}{program} block.
+  \item \verb|DW_TAG_inlined_subroutine| \hfill \\
+    Describes a function whose code has
+    been copied by the compiler inside another part of the program (i.e.
+    \emph{inlined}) as a performance optimization.
+  \item \verb|DW_TAG_subroutine| \hfill \\
+    Describes normal functions. In \gls{object-oriented} languages is also
+    used to describe methods, with the type the method applies to linked
+    as type DIE of the first parameter. 
+\end{itemize}
+
+The basic structure is shared among the three types, with the following
+attributes in the top level DIE:
+
+\begin{itemize}
+  \item A \verb|DW_AT_name| attribute provides the name of the function.
+  \item A \verb|DW_AT_type| attribute references the return type of the
+    function. This is only present if the function returns a value.
+  \item A \verb|DW_AT_external| attribute, which contains a flag indicating
+    whether the function is available to be used from compilation units other
+    than the one where its definition lives. This flag is optional, and only
+    required to be present (and have a non-zero value) for functions which
+    are referenced from the \verb|.debug_pubnames| ELF section.
+\end{itemize}
+
 \begin{figure}
   \centering
-  \begin{tikzpicture}
-    \node (dielabel) {DIE};
-
-    \node (taglabel) [below of=dielabel] {Tag};
-    \node[datain] (tagvalue) [below=0cm of taglabel] {\verb|DW_TAG_subprogram|};
-
-    \node (attrlabel) [below of=tagvalue] {Attributes};
-    \node[datain] (attr1) [below=0cm of attrlabel] {\verb|DW_AT_type|};
-    \node[datain] (attr2) [below=0cm of attr1] {\verb|DW_AT_sibling|};
-    \node (attrellipsis) [below=0cm of attr2] { ... };
-    \node[datain] (attrN) [below=0cm of attrellipsis] {\verb|DW_AT_...|};
-
-    \node[datablob] (refdie2) [right=4cm of attr2] { };
-    \node[datablob] (refdie1) [above of=refdie2] { };
-    \node  (refdieellipsis) [below=1mm of refdie2] { ... };
-    \node[datablob] (refdieN) [below=1mm of refdieellipsis] { };
-
-    \node (refdieslabel) [below of=refdieN] {DIEs referenced by offset};
-
-    \path[arrow, *->] (attr1.east) -- (refdie1.west);
-    \path[arrow, *->] (attr2.east) -- (refdie2.west);
-    \path[arrow, *->] (attrN.east) -- (refdieN.west);
-
+  \begin{tikzpicture}[die]
+    % Top level DIE
+    \node[dielabel] (taglabel)  {Tag};
+    \node[dieitems=1] (tag)     {\verb|DW_TAG_subprogram|};
+    \node[dielabel] (attrlabel) {Attributes};
+    \node[dieitems=4] (attributes) {
+      \verb|DW_AT_external| \nodepart{two}
+      \verb|DW_AT_name|     \nodepart{three}
+      \verb|DW_AT_type|     \nodepart{four}
+      \verb|DW_AT_sibling| };
     \begin{pgfonlayer}{background}
-      \node[datablob] (bgbox) [fit=(taglabel) (attrN)] { };
-      \node[fill=yellow!20, rectangle, rounded corners] (refdiesbg)
-        [fit=(refdieslabel) (refdie1)] { };
+      \node[datablob] (die) [fit=(taglabel) (attributes) (tag)] {};
     \end{pgfonlayer}
-  \end{tikzpicture}
 
-  \caption{DIE attribute references.}
-  \label{fig:die-attr-references}
+    % Top level DIE attribute values
+    \node[enumitems=1] (ATname)     [right=4cm of attributes, yshift=3mm] {\emph{name}};
+    \node[enumitems=1] (ATexternal) [above=5mm of ATname] {\emph{external}};
+    \node[datablob]    (ATtype)     [below=5mm of ATname] {Type DIE};
+
+    \path[valuefrom] (attributes.text east)  -- (ATexternal.west);
+    \path[valuefrom] (attributes.two east)   -- (ATname.west);
+    \path[arrow]     (attributes.three east) -- (ATtype.west);
+
+    % 1st Parameter DIE
+    \node[dielabel]   (p1 taglabel) [yshift=-1.5cm] {Tag};
+    \node[dieitems=1] (p1 tag)        {\verb|DW_TAG_formal_parameter|};
+    \node[dielabel]   (p1 attrlabel)  {Attributes};
+    \node[dieitems=4] (p1 attributes) {
+      \verb|DW_AT_name| \nodepart{two}
+      \verb|DW_AT_type| \nodepart{three}
+      ...               \nodepart{four}
+      \verb|DW_AT_sibling| };
+    \begin{pgfonlayer}{background}
+      \node[datablob] (p1 die) [fit=(p1 taglabel) (p1 attributes) (p1 tag)] {};
+    \end{pgfonlayer}
+
+    \path[arrow] (attributes.four south) -- (p1 die);
+
+    % 1st parameter DIE attribute values
+    \node[datablob]    (p1 ATtype) [right=3.7cm of p1 attributes, yshift=-1mm] {Type DIE};
+    \node[enumitems=1] (p1 ATname) [above=5mm of p1 ATtype] {\emph{name}};
+
+    \path[valuefrom] (p1 attributes.text east)  -- (p1 ATname.west);
+    \path[arrow]     (p1 attributes.two east)   -- (p1 ATtype.west);
+
+    % Ellipsis to additional parameter DIEs
+    \node[datablob] (other die) [on chain, yshift=-1cm] { ... };
+    \node[datablob] (pN die) [on chain, yshift=-8mm] {Formal parameter DIE};
+    \node (ellipsis) [on chain, yshift=-8mm] { ... };
+
+    \path[arrow] (p1 attributes.four south) -- (other die.north);
+    \path[arrow] (other die.south) -- (pN die.north);
+    \path[arrow] (pN die.south) -- (ellipsis);
+
+  \end{tikzpicture}
+  \caption{DIEs describing a function type}
+  \label{fig:function-type-die}
 \end{figure}
+
+
+From the top-level DIE, a \verb|DW_AT_sibling| attribute references the first
+of chain of entries which provide additional information about the function
+and its source code. Among all the entries in the chain, the ones with the
+\verb|DW_TAG_formal_parameter| describe the parameters of the function. It is
+guaranteed that the entries describing the parameters will be in the chain in
+the same order as they appear in the source program, but they may not be
+consecutive. Each parameter entry contains the following attributes:
+
+\begin{itemize}
+  \item A \verb|DW_AT_name| attribute provides the name of the parameter.
+  \item A \verb|DW_AT_type| attribute references the DIE for the type of
+    the parameter.
+\end{itemize}
+
+%%%
 
 
 \section{Design}

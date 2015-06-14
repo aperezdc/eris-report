@@ -14,8 +14,6 @@
 \usepackage{hyphenat}
 \usepackage{varioref}
 
-\usepackage{unicode-math}
-
 % Graphics support
 \usepackage{xcolor}
 \usepackage{dirtree}
@@ -30,7 +28,9 @@
 \definecolor{darkmagenta}{rgb}{0.65, 0.0, 0.65}
 \definecolor{lightblue}{rgb}{0.5, 0.75, 1.0}
 
-\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+% \def\checkmark{\tikz\fill (0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+\def\checkmark{\tikz\fill
+	(0, 1) -- (1, 0) -- (2.5, 1.5) -- (1, 0.5) -- cycle;}
 
 \def\foldersymbol{\tikz\fill[scale=0.25]
   (0, 0) -- (1.7, 0) -- (1.7, 1) -- (1, 1) --
@@ -38,8 +38,8 @@
 \newcommand\inlinesymbol[1]{\resizebox{\widthof{#1}*\ratio{\widthof{x}}{\widthof{\normalsize x}}}{!}{#1}}
 
 \newcommand\DtFolder[1]{{\inlinesymbol{\color{grey}\foldersymbol}} #1}
-\newcommand\Tick{\inlinesymbol\checkmark\relax}
-
+% \newcommand\Tick{\inlinesymbol\checkmark}
+\newcommand\Tick{ $\star$ }
 
 % Make a TOC in the generated PDF
 \usepackage[pdfstartview=FitH,
@@ -50,11 +50,13 @@
 \usepackage[open]{bookmark}
 \bookmarksetup{color=blue}
 % \usepackage{minitoc}
-\usepackage[acronym,nomain]{glossaries}
+\usepackage[acronym,xindy,toc]{glossaries}
 \makeglossaries
+\glossarystyle{altlistgroup}
 \input{glossary}
 
 % Fonts
+\usepackage[OT1]{fontenc}
 \usepackage{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
 
@@ -84,14 +86,24 @@
 
 % \setmonofont[Scale=MatchLowercase]{Input Mono}
 % \setmonofont[Scale=MatchLowercase]{Source Code Pro}
-% \setmonofont[Scale=MatchLowercase]{CamingoCode}
-% \setmonofont[Scale=MatchUppercase]{CamingoCode}
-% \setmonofont[Scale=MatchLowercase]{PragmataPro}
+% \setmonofont[Scale=MatchUppercase]{PragmataPro}
 % \setmonofont[Scale=MatchLowercase]{Akkurat-Mono}
-\setmonofont[Scale=MatchUppercase]{Inconsolatazi4}
+% \setmonofont[Scale=MatchUppercase]{Inconsolatazi4}
 % \setmonofont[Scale=MatchLowercase]{Inconsolatazi4}
 
-\setmathfont{Asana Math}
+% \setmonofont[Scale=MatchLowercase]{PT Mono}
+% \setmonofont[Scale=MatchLowercase]{Fira Code}
+% \setmonofont[Scale=MatchUppercase]{Input Mono Condensed}
+% \setmonofont[Scale=MatchUppercase]{Luxi Mono}
+% \setmonofont{Input Mono Condensed}
+
+\newfontfamily\InpLight[
+	ItalicFont = {Input Mono Narrow Light Italic},
+	BoldFont   = {Input Mono Narrow Regular},
+	BoldItalicFont = {Input Mono Narrow Italic},
+]{Input Mono narrow Light}
+
+\setmonofont[Scale=MatchLowercase]{Input Mono Narrow Light}
 
 
 \usepackage{setspace}
@@ -254,9 +266,11 @@ down to upcoming generations.
 \chapter*{Keywords}
 \begin{itemize}
 	\item Automatic binding generation.
-	\item JIT code generation.
-	\item DWARF debugging information format.
+	\item \gls{ELF}.
+	\item \gls{DWARF}.
+	\item Debugging information.
 	\item Lua programming language.
+	% \item JIT code generation.
 \end{itemize}
 
 % Indexes
@@ -275,9 +289,6 @@ down to upcoming generations.
 
 \backmatter
 \cleardoublepage
-\chapter{Glossary}
-\glsaddall
-% \printglossary[type=\acronymtype]
-\printglossary
+\printglossaries
 
 \end{document}
