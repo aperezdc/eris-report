@@ -2,8 +2,8 @@
 rule texpdf
   pool = console
   description = TEX ${tex_main}
-  command = lualatex --shell-escape ${tex_main} $
-         && makeglossaries ${tex_main}          $
+  command = lualatex --shell-escape ${tex_main} < /dev/null $
+         && makeglossaries ${tex_main}                      $
          && lualatex --shell-escape --interaction=batchmode ${tex_main}
 
 rule svg2pdf
