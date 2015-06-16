@@ -31,7 +31,7 @@ tarballs with the source code and doing a local build. When enabled, bundled
 dependencies will be automatically downloaded, built, and used, instead
 instead of the versions provided by the system. In the case of using
 \verb|libdward| bundled, it will be statically linked.
-See~\nameref{sec:running-configure} for instructions for enabling bundled
+See~\autoref{sec:running-configure} for instructions for enabling bundled
 libraries.
 
 \begin{table}
@@ -42,7 +42,7 @@ libraries.
 	Debian, Ubuntu\footnote{Those systems do not provide Lua 5.3 packages
 	at the time of writing, therefore usage of of the bundled version is
 	recommended. See~\autoref{sec:running-configure} for instructions.} &
-    \verb|{apt-get install| &
+    \verb|apt-get install| &
     \verb|libdwarf-dev| \verb|ninja-build| \\
 	Arch Linux & \verb|pacman -S| & \verb|libdwarf| \verb|ninja| \verb|lua| \\
 	\bottomrule
@@ -56,7 +56,7 @@ by popular GNU/Linux distributions. Some versions of Debian (and derivatives
 like Ubuntu) include only a static version of \verb|libdwarf| in the packages,
 most likely not built as \gls{PIC}, which is a requirement.
 
-\section{Project Structure}
+\section{Project Source Structure}
 
 The \Eris* source code
 
@@ -82,25 +82,31 @@ The \Eris* source code
 \end{figure}
 
 
+\section{Build Tools}
+
+\subsection{Autoconfiguration}
+  \label{sec:running-configure}
+
+
 \section{Type Representation}
 
 Converting values from C to Lua, and vice versa, is one of the most important
 tasks performed by \Eris*: it is needed to make C values accessible from Lua,
 and for converting function parameters and return values when invoking
-C functions. Henceforth, it is needed to read this information from the DWARF
-debugging information (see \nameref{sec:debuginfo-structure}), and make keep
-it around in a suitable data structure. This structure must be:
+C functions. Therefore, it is needed to read this information from the DWARF
+debugging information (see \nameref{sec:debuginfo-structure}), and keep it
+around in a suitable data structure. This structure must be:
 
 \begin{itemize}
   \item Exhaustive, to hold all the needed information.
   \item Compact, to minimize memory usage.
 \end{itemize}
 
-Describing base types is possible using just an enumerated type: there is only
-so many of them, and the characteristics (size, name, etc) are well known. The
-challenging part is representing user defined types (\mintinline{c}{struct},
-\mintinline{c}{enum}, \mintinline{c}{union}), and types derived from other
-(pointers, arrays).
+Describing base types is possible using just an enumerated type: there isa
+fixed amount of them, and the characteristics (size, name, etc) are well
+known. The challenging part is representing user defined types
+(\mintinline{c}{struct}, \mintinline{c}{enum}, \mintinline{c}{union}), and
+types derived from other (pointers, arrays).
 
 The data structure for describing types is \verb|ErisTypeInfo| (listing
 \vref{lst:ErisTypeInfo}). It is a tagged \mintinline{c}{struct}, with the kind
@@ -174,8 +180,9 @@ The following sections describe in detail the members of \verb|ErisTypeInfo|.
 \noindent
 Even though it is sufficient to provide type kind codes for all the base types
 as discussed before, providing the possibility of querying their \verb|name|
-and \verb|size| is a nice touch, at a very small cost: the \verb|ErisTypeInfo|
-value for each one of the base types is a singleton, defined as follows:
+and \verb|size| is a nice detail, at a very small cost: the
+\verb|ErisTypeInfo| value for each one of the base types is a singleton,
+defined as follows:
 
 \begin{ccode*}{samepage=true}
   /* File: eris-typing.h */
@@ -205,7 +212,7 @@ the aid of the C preprocessor and a couple generator macros are used (see
 \end{ccode*}
 
 \noindent
-Pointers are be represented by referencing the \verb|ErisTypeInfo| of the
+Pointers are represented by referencing the \verb|ErisTypeInfo| of the
 pointed-to type. Thus, it is the only member in \mintinline{c}{struct
 TI_pointer}. The size of a pointer value is platform-dependant, but well-known
 and constant for each platform, and is the value of the C expression
@@ -287,8 +294,7 @@ remaining fields varies with the type being described:
 \end{itemize}
 
 \noindent
-Again, note how an \Mc|union| is used in order to make fields share the same
-memory space.
+An \Mc|union| is used to make fields share the same memory space.
 
 
 \subsection{Type Alias Representation}
