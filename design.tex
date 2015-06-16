@@ -211,10 +211,11 @@ point types (\mintinline{c}{float}, \mintinline{c}{double}), the
 The size of the values in is given using a \verb|DW_AT_byte_size| attribute,
 in bytes. Sizes are the same reported by the C \mintinline{c}{sizeof}
 operator. A \verb|DW_AT_encoding| attribute specifies how the values are
-used in the program. For example, an encoding of \verb|DW_ATE_boolean|
-corresponds with the \mintinline{c}{bool} (or \mintinline{c}{_Bool}) in the
+used in the program. For example, \verb|DW_ATE_boolean|
+corresponds with the \Mc|bool| type (or \Mc|_Bool|) in the
 source program. The following table summarizes how C types are represented by
-a base type DIE for the \textit{x86\_64} architecture:
+a base type DIE for the x86\_64 architecture (sizes may vary in other
+architectures):
 
 \begin{center}
   \begin{tabular}{lcl}
@@ -271,8 +272,8 @@ using \mintinline{c}{typedef}.
   \label{fig:die-pointer-type}
 \end{figure}
 
-Pointer types are represented by DIEs with a \verb|DW_TAG_pointer_type| tag.
-A lone \verb|DW_AT_type| attribute points to the DIE of the pointed-to type.
+Pointer types are represented by DIEs with a \verb|DW_TAG_pointer_type| tag,
+and a lone \verb|DW_AT_type| attribute points to the DIE of the pointed-to type.
 This allows to represent pointers of to any type. Multiple levels of
 indirection are represented by chains of \verb|DW_TAG_pointer_type| DIEs.
 The example in \autoref{fig:die-pointer-type} exemplifies this situation, in
@@ -337,7 +338,7 @@ A \verb|DW_AT_type| attribute contains a reference to the type of the elements
 of the array. The space reserved for attribute values can be insufficient to
 store the number of elements in the array, so instead a chain of related DIEs
 is referenced using a \verb|DW_AT_sibling| attribute, and one of the elements
-in the chain is \verb|DW_TAG_subrange_type| DIE. The later specifies the
+in the chain is \verb|DW_TAG_subrange_type| DIE. The latter specifies the
 \emph{size} —using a \verb|DW_AT_byte_size| attribute— of the type needed to
 store the \emph{count} of items, and the location of the value itself using
 a \verb|DW_AT_count| attribute.
@@ -444,12 +445,12 @@ a \verb|DW_AT_name| attribute provides the \emph{name} of the aliased type.
   \label{fig:struct-type-die}
 \end{figure}
 
-Structured types, also known as \emph{record types} or \emph{compound data
-types} depending on the programming languages, are used-defined data
-structures which contain a collection of related elements, which can be
-accessed using a numeric index or (most commonly) by names given to them. Each
-element may also be called \emph{field} or \emph{member}. In C records are
-defined using the \mintinline{c}{struct} keyword:
+\noindent Structured types, also known as \emph{record types} or
+\emph{compound data types} depending on the programming languages, are
+used-defined data structures which contain a collection of related elements,
+which can be accessed using a numeric index or (most commonly) by names given
+to them. Each element may also be called \emph{field} or \emph{member}. In
+C records are defined using the \mintinline{c}{struct} keyword:
 
 \begin{minted}{c}
   struct Point {
@@ -458,10 +459,10 @@ defined using the \mintinline{c}{struct} keyword:
   };
 \end{minted}
 
-A record type is described using a set of related DIEs. At the top level,
-a DIE with tag \verb|DW_TAG_structure_type| provides the size of the record
-type, by means of a \verb|DW_AT_byte_size| attribute, and the name of the
-record type using a \verb|DW_AT_name| attribute.
+\noindent A record type is described using a set of related DIEs. At the top
+level, a DIE with tag \verb|DW_TAG_structure_type| provides the size of the
+record type in bytes, by means of a \verb|DW_AT_byte_size| attribute, and the
+name of the record type using a \verb|DW_AT_name| attribute.
 
 In order to describe the members, a DIE with tag \verb|DW_TAG_member| is
 used for each of them. These DIEs contain a \verb|DW_AT_type| attribute
@@ -501,7 +502,7 @@ top level DIE which describes the type in full.
 
 \minisec{Union Types}
 
-Union types use the same structure of DIEs as record types, with a coupld of
+Union types use the same structure of DIEs as record types, with a couple of
 small differeces: the tag for the top-level DIE is \verb|DW_TAG_union_type|,
 and the \verb|DW_AT_byte_size| attribute indicates the size of the
 \emph{largest member type}.
@@ -515,7 +516,7 @@ representation of record and enumeration types: a top level DIE with tag
 for values of the enumerated type using a \verb|DW_AT_byte_size| attribute,
 and a \verb|DW_AT_name| attribute contains the name of the type.
 
-The set of values are describes by a DIE each, with tag
+The set of values are described by a DIE each, with tag
 \verb|DW_TAG_enumerator|. Enumerators contain a \verb|DW_AT_name| attribute
 with the name of the enumerator, and its associated value in
 a \verb|DW_AT_constvalue| attribute.
@@ -672,7 +673,7 @@ attributes in the top level DIE:
 
 
 From the top-level DIE, a \verb|DW_AT_sibling| attribute references the first
-of chain of entries which provide additional information about the function
+entry of the chain, which provides additional information about the function
 and its source code. Among all the entries in the chain, the ones with the
 \verb|DW_TAG_formal_parameter| describe the parameters of the function. It is
 guaranteed that the entries describing the parameters will be in the chain in
@@ -689,6 +690,14 @@ consecutive. Each parameter entry contains the following attributes:
 
 
 \section{Design}
+
+
+\subsection{Naming}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.5\textwidth]{img/eris-orbit}
+\end{figure}
 
 
 \tikzstyle{component} = [

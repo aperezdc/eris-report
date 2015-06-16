@@ -5,7 +5,14 @@ rule texpdf
          && makeglossaries ${tex_main}          $
          && lualatex --shell-escape --interaction=batchmode ${tex_main}
 
+rule svg2pdf
+  description = SVG->PDF ${in}
+  command = inkscape -z -C -T -A ${out} ${in}
+
+build img/eris-orbit.pdf : svg2pdf img/eris-orbit.svg
+
 build memoir.pdf : texpdf $
+img/eris-orbit.pdf        $
 contextualization.tex     $
 implementation.tex        $
 bibliography.tex          $
