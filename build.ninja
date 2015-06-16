@@ -13,20 +13,20 @@ rule svg2pdf
 build img/eris-orbit.pdf : svg2pdf img/eris-orbit.svg
 build img/lua-logo.pdf   : svg2pdf img/lua-logo.svg
 
-build memoir.pdf : texpdf $
-img/eris-orbit.pdf        $
-img/lua-logo.pdf          $
-contextualization.tex     $
-implementation.tex        $
-bibliography.tex          $
-introduction.tex          $
-conclusions.tex           $
-certificate.tex           $
-design.tex                $
-hyphenation.tex           $
-glossary.tex              $
-summary.tex               $
-memoir.tex
-  tex_main = memoir
+build eris-report.pdf : texpdf $
+img/eris-orbit.pdf             $
+img/lua-logo.pdf               $
+contextualization.tex          $
+implementation.tex             $
+bibliography.tex               $
+introduction.tex               $
+conclusions.tex                $
+certificate.tex                $
+design.tex                     $
+hyphenation.tex                $
+glossary.tex                   $
+summary.tex                    $
+eris-report.tex
+  tex_main = eris-report
 
-default memoir.pdf
+default eris-report.pdf

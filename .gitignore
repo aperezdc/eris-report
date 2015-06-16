@@ -7,7 +7,7 @@
 .ninja_deps
 memoir.pdf
 *.ac[rn]
-_minted-memoir/
+_minted-eris-report/
 *.ist
 *.auxlock
 *.glsdefs
