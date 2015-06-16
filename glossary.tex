@@ -48,6 +48,17 @@
 		data in order to improve storage utilization},
 }
 
+\newglossaryentry{flexible-array-member}{
+	name={flexible array member},
+	description={
+		Feature introduced in the C99 standard of the C programming language
+		which allows the last member of a \Mc:struct: to be an array of an
+		unspecified dimension. Space needed by the array does not contribute
+		to the size of the \Mc:struct: type, and must be manually accounted
+		for when allocating the \Mc:struct: from the heap.
+	},
+}
+
 \newglossaryentry{gls-TUE}{
 	name={Type Unit Entry},
 	description={A particular kind of DWARF DIE that contains information
@@ -66,6 +77,8 @@
 \newacronym{FDL}{FDL}{Free Documentation License}
 \newacronym{API}{API}{Application Programming Interface}
 \newacronym{PIC}{PIC}{Position-Independent Code}
+\newacronym{VLA}{VLA}{Variable-Length Array}
+\newacronym{PUC-Rio}{PUC-Rio}{Pontifícia Universidade Católica do Rio de Janeiro}
 
 %
 % Those are just simple command-abbreviations to format pieces of text which
@@ -74,4 +87,3 @@
 % all occurrences, if needed.
 %
 \def\Eris*{\textsc{\sffamily Eris}}
-

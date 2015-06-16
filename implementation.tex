@@ -1,24 +1,24 @@
-% vim: ft=tex spell spelllang=en
+% vim: ft=tex spell spelllang=en ts=2 sw=2 et
 
 \chapter{Implementation}
 
 \section{Prerequisites}
 
 \begin{table}[h]
-    \centering
-    \begin{tabular}{lrccc}
-	\toprule
-	Component & Version  & Required & Optional & Bundled \\
-	\midrule
-	Lua             & 5.3      & \Tick    &          & \Tick   \\
-	\verb|libdwarf| & 20150507 & \Tick    &          & \Tick   \\
-	\verb|libelf|   & 0.152    & \Tick    &          &         \\
-	\verb|readline| & 5.0      &          & \Tick    &         \\
-	\verb|libffi|   & 3.1      & \Tick    &          &         \\
-	\bottomrule
-    \end{tabular}
-    \caption{Dependencies}
-    \label{tab:eris-dependencies}
+	\centering
+	\begin{tabular}{lrccc}
+		\toprule
+		Component & Version  & Required & Optional & Bundled \\
+		\midrule
+		Lua             & 5.3      & \Tick &       & \Tick \\
+		\verb|libdwarf| & 20150507 & \Tick &       & \Tick \\
+		\verb|libelf|   & 0.152    & \Tick &       & \\
+		\verb|readline| & 5.0      &       & \Tick & \\
+		\verb|libffi|   & 3.1      & \Tick &       & \\
+		\bottomrule
+	\end{tabular}
+	\caption{Dependencies}
+	\label{tab:eris-dependencies}
 \end{table}
 
 \autoref{tab:eris-dependencies} shows dependencies expected to be installed in
@@ -32,20 +32,20 @@ See~\nameref{sec:running-configure} for instructions for enabling bundled
 libraries.
 
 \begin{table}
-    \begin{tabular}{ccp{0.4\textwidth}}
-       	\toprule
+  \begin{tabular}{ccp{0.4\textwidth}}
+  \toprule
 	Distribution & Installation Command & Packages \\
 	\midrule
 	Debian, Ubuntu\footnote{Those systems do not provide Lua 5.3 packages
 	at the time of writing, therefore usage of of the bundled version is
 	recommended. See~\autoref{sec:running-configure} for instructions.} &
-	    \verb|{apt-get install| &
-	    \verb|libdwarf-dev| \verb|ninja-build| \\
+    \verb|{apt-get install| &
+    \verb|libdwarf-dev| \verb|ninja-build| \\
 	Arch Linux & \verb|pacman -S| & \verb|libdwarf| \verb|ninja| \verb|lua| \\
 	\bottomrule
-    \end{tabular}
-    \caption{Dependency packages in popular GNU/Linux distributions.}
-    \label{tab:distro-dependency-packages}
+  \end{tabular}
+  \caption{Dependency packages in popular GNU/Linux distributions.}
+  \label{tab:distro-dependency-packages}
 \end{table}
 
 \autoref{tab:distro-dependency-packages} shows required packages as provided
@@ -81,69 +81,341 @@ The \Eris* source code
 
 \section{Type Representation}
 
-The \texttt{ErisTypeInfo} structure is used to represent type information.
+Converting values from C to Lua, and vice versa, is one of the most important
+tasks performed by \Eris*: it is needed to make C values accessible from Lua,
+and for converting function parameters and return values when invoking
+C functions. Henceforth, it is needed to read this information from the DWARF
+debugging information (see \nameref{sec:debuginfo-structure}), and make keep
+it around in a suitable data structure. This structure must be:
 
-\begin{listing}
-    \centering
-    \begin{minted}[autogobble]{c}
-	typedef enum {
-	    ERIS_TYPE_VOID,    /* void        */
-	    ERIS_TYPE_BOOL,    /* _Bool       */
-	    ERIS_TYPE_S8,      /* int8_t      */
-	    ERIS_TYPE_U8,      /* uint8_t     */
-	    ERIS_TYPE_S16,     /* int16_t     */
-	    ERIS_TYPE_U16,     /* uint16_t    */
-	    ERIS_TYPE_S32,     /* int32_t     */
-	    ERIS_TYPE_U32,     /* uint32_t    */
-	    ERIS_TYPE_S64,     /* int64_t     */
-	    ERIS_TYPE_U64,     /* uint64_t    */
-	    ERIS_TYPE_FLOAT,   /* float       */
-	    ERIS_TYPE_DOUBLE,  /* double      */
-	    ERIS_TYPE_TYPEDEF, /* typedef … T */
-	    ERIS_TYPE_CONST,   /* const T     */
-	    ERIS_TYPE_POINTER, /* T*          */
-	    ERIS_TYPE_ARRAY,   /* T …[n]      */
-	    ERIS_TYPE_STRUCT,  /* struct …    */
-	    ERIS_TYPE_UNION,   /* union …     */
-	    ERIS_TYPE_ENUM,    /* enum …      */
-	} ErisType;
-    \end{minted}
-    \caption{\texttt{ErisType} enumeration.}
-    \label{lst:ErisType}
-\end{listing}
+\begin{itemize}
+  \item Exhaustive, to hold all the needed information.
+  \item Compact, to minimize memory usage.
+\end{itemize}
 
-\begin{minted}{c}
-struct _ErisTypeInfo {
-    ErisType type;
-    union {
+Describing base types is possible using just an enumerated type: there is only
+so many of them, and the characteristics (size, name, etc) are well known. The
+challenging part is representing user defined types (\mintinline{c}{struct},
+\mintinline{c}{enum}, \mintinline{c}{union}), and types derived from other
+(pointers, arrays).
+
+The data structure for describing types is \verb|ErisTypeInfo| (listing
+\vref{lst:ErisTypeInfo}). It is a tagged \mintinline{c}{struct}, with the kind
+of type as the tag (\verb|ERIS_TYPE_S32|, \verb|ERIS_TYPE_STRUCT|, etc; the
+complete list of values can be seen in listing \vref{lst:ErisType}). The
+contained data will vary depending on the value of the \emph{kind} tag. The
+members for all possible values are grouped in an \mintinline{c}{union} in
+order to make them share the same memory space.
+
+\begin{listing}[h]
+  \begin{minted}{c}
+    struct _ErisTypeInfo {
+      ErisType type;
+      union {
         struct TI_base     ti_base;
         struct TI_pointer  ti_pointer;
         struct TI_typedef  ti_typedef;
         struct TI_const    ti_const;
         struct TI_array    ti_array;
         struct TI_compound ti_compound;
+      };
     };
-};
-typedef struct _ErisTypeInfo ErisTypeInfo;
-\end{minted}
+    typedef struct _ErisTypeInfo ErisTypeInfo;
+  \end{minted}
+  \caption{\texttt{ErisTypeInfo}.}
+  \label{lst:ErisTypeInfo}
+\end{listing}
+
+\begin{listing}[f]
+  \centering
+  \begin{minted}{c}
+    typedef enum {
+      ERIS_TYPE_VOID,    /* void        */
+      ERIS_TYPE_BOOL,    /* _Bool       */
+      ERIS_TYPE_S8,      /* int8_t      */
+      ERIS_TYPE_U8,      /* uint8_t     */
+      ERIS_TYPE_S16,     /* int16_t     */
+      ERIS_TYPE_U16,     /* uint16_t    */
+      ERIS_TYPE_S32,     /* int32_t     */
+      ERIS_TYPE_U32,     /* uint32_t    */
+      ERIS_TYPE_S64,     /* int64_t     */
+      ERIS_TYPE_U64,     /* uint64_t    */
+      ERIS_TYPE_FLOAT,   /* float       */
+      ERIS_TYPE_DOUBLE,  /* double      */
+      ERIS_TYPE_TYPEDEF, /* typedef … T */
+      ERIS_TYPE_CONST,   /* const T     */
+      ERIS_TYPE_POINTER, /* T*          */
+      ERIS_TYPE_ARRAY,   /* T …[n]      */
+      ERIS_TYPE_STRUCT,  /* struct …    */
+      ERIS_TYPE_UNION,   /* union …     */
+      ERIS_TYPE_ENUM,    /* enum …      */
+    } ErisType;
+  \end{minted}
+  \caption{\texttt{ErisType} enumeration.}
+  \label{lst:ErisType}
+\end{listing}
+
+\noindent
+The following sections describe in detail the members of \verb|ErisTypeInfo|.
+
+
+\subsection{Base Type Representation}
+
+\begin{ccode*}{samepage=true}
+  struct TI_base {
+    char               *name;
+    uint32_t            size;
+  };
+\end{ccode*}
+
+\noindent
+Even though it is sufficient to provide type kind codes for all the base types
+as discussed before, providing the possibility of querying their \verb|name|
+and \verb|size| is a nice touch, at a very small cost: the \verb|ErisTypeInfo|
+value for each one of the base types is a singleton, defined as follows:
+
+\begin{ccode*}{samepage=true}
+  /* File: eris-typing.h */
+  extern const ErisTypeInfo* eris_typeinfo_u32;
+
+  /* File: eris-typing.c */
+  const ErisTypeInfo* eris_typeinfo_u32 = &((ErisTypeInfo) {
+    .kind         = ERIS_TYPE_U32,
+    .ti_base.name = "uint32_t",
+    .ti_base.size = sizeof (uint32_t),
+  });
+\end{ccode*}
+
+\noindent
+In practice, to avoid having to write the definitions of all the base types,
+the aid of the C preprocessor and a couple generator macros are used (see
+\autoref{sec:cpp-abuse-genmacros}).
+
+
+\subsection{Pointer Representation}
+  \label{sec:pointer-typeinfo}
+
+\begin{ccode*}{samepage=true}
+  struct TI_pointer {
+    const ErisTypeInfo *typeinfo;
+  };
+\end{ccode*}
+
+\noindent
+Pointers are be represented by referencing the \verb|ErisTypeInfo| of the
+pointed-to type. Thus, it is the only member in \mintinline{c}{struct
+TI_pointer}. The size of a pointer value is platform-dependant, but well-known
+and constant for each platform, and is the value of the C expression
+\mintinline{c}{sizeof(void*)}.
+
+
+\subsection{Array Representation}
+
+\begin{ccode*}{samepage=true}
+  struct TI_array {
+    const ErisTypeInfo *typeinfo;
+    uint64_t            n_items;
+  };
+\end{ccode*}
+
+\noindent
+Arrays are represented by referencing the \verb|ErisTypeInfo| of the array
+items, plus the number of items (\verb|n_items|) present in the array. The
+size of an array value can be calculated multiplying the size of the item type
+by the number of items in the array.
+
+
+\subsection{User-defined Type Representation}
+
+\begin{ccode*}{samepage=true}
+  struct TI_compound {
+    char              *name;
+    uint32_t           size;
+    uint32_t           n_members;
+    ErisTypeInfoMember members[];
+  };
+\end{ccode*}
+
+\noindent
+This record type will represent all user-defined types: enumerated types
+(\Mc:enum:), record types (\Mc:struct:), and union types (\Mc:union:):
+
+\begin{description}
+  \item [\Mc|name|] \hfill \\
+    User-defined types are usually given a name, but it is optional and in
+    this case the value will be \Mc|NULL|.
+  \item [\Mc|size|] \hfill \\
+    Contains the size of the type, in bytes.
+  \item [\Mc|n_members| / \Mc|members|] \hfill \\
+    Count of members (or enumerators, for \verb|ERIS_TYPE_ENUM|) in the type,
+    and an array contaning their descriptions. Using
+    a \gls{flexible-array-member}, allows usage of a single chunk of memory
+    for the \verb|ErisTypeInfo| itself and the items in the array.
+\end{description}
+
+\noindent
+The auxiliar \verb|ErisTypeInfoMember| type is defined as follows:
+
+\begin{ccode*}{samepage=true}
+  typedef struct {
+    const char             *name;
+    union {
+      int64_t               value; /* enum */
+      struct {                     /* union, struct */
+        uint32_t            offset;
+        const ErisTypeInfo *typeinfo;
+      };
+    };
+  } ErisTypeInfoMember;
+\end{ccode*}
+
+\noindent
+This always contains the (optional) \Mc|name| of the types, and usage of the
+remaining fields varies with the type being described:
+
+\begin{itemize}
+  \item For \Mc|ERIS_TYPE_STRUCT|, the \Mc|offset| of the member (in bytes,
+    from the beginning of the record) and a pointer to its type information
+    (\Mc|typeinfo|) are used.
+  \item For \Mc|ERIS_TYPE_UNION|, the \Mc|offset| is ignored, and only the
+    type information of the member (\Mc|typeinfo|) is used.
+  \item For \Mc|ERIS_TYPE_ENUM|, only the \Mc|value| associated with the
+    enumerator is used.
+\end{itemize}
+
+\noindent
+Again, note how an \Mc|union| is used in order to make fields share the same
+memory space.
+
+
+\subsection{Type Alias Representation}
+
+\begin{ccode*}{samepage=true}
+  struct TI_typedef {
+    char               *name;
+    const ErisTypeInfo *typeinfo;
+  };
+\end{ccode*}
+
+Type aliases assign a name to an arbitrary type. They are represented by the
+\Mc|name| and a pointer to the \Mc|ErisTypeInfo| of the type.
+
+
+\subsection{Read-only Type Representation}
+
+\begin{ccode*}{samepage=true}
+  struct TI_const {
+    const ErisTypeInfo *typeinfo;
+  };
+\end{ccode*}
+
+\noindent
+Flagging a type as read-only (i.e. using the \Mc|const| type qualifier in C)
+is represented in the same way as pointers (\autoref{sec:pointer-typeinfo}):
+by keeping a pointer to the \Mc|ErisTypeInfo| that is read-only.
 
 
 \section{Memory owners and life-cycle}
 
 Problem: functions that allocate memory
 
-\begin{minted}{c}
+\begin{ccode*}{samepage=true}
 struct point {
 	int x;
 	int y;
 };
-\end{minted}
+\end{ccode*}
 
 In Lua, we could create an instance like this:
 
-\begin{minted}{lua}
+\begin{luacode}
 local Geometry = eris.wrap("libgeometry.so")
 -- Creates heavy userdata, the Lua GC handles freeing memory
 local point = Geometry.point { x = 1, y = -1 }
-\end{minted}
+\end{luacode}
+
+
+\section{Bits \& Pieces}
+
+This section describes assorted techniques used in the implementation of
+\Eris* which do not fall under a common umbrella, yet they deserve to be
+mentioned.
+
+\subsection{Preprocessor “Generator Macros”}
+  \label{sec:cpp-abuse-genmacros}
+
+This is a programming pattern used thorough the code of \Eris*: the
+C preprocessor is used in a convoluted way as a rudimentary code generator
+using lists of related elements. First, a macro of related elements is defined
+(\emph{enumerator macro}, from now on), and it must accept the identifier for
+another macro (the \emph{generator macro}) as a parameter. Each element in the
+enumerator macro is an expansion of the generator, passing the parameters
+needed by the generator.
+
+In order to better understand how generator macros work, let us walk through
+a complete example adapted from the \Eris* source code. The following macro
+expands into a function which checks the type of an \Mc|ErisTypeInfo| — it is
+the \emph{generator}:
+
+\begin{ccode*}{samepage=true}
+#define MAKE_TYPEINFO_IS_TYPE(suffix, name, ctype)            \
+    bool eris_typeinfo_is_ ## name (const ErisTypeInfo *înfo) \
+    { return info->type == ERIS_TYPE_ ## suffix; }
+\end{ccode*}
+
+\noindent In generator macros like this, the concatenation operator
+(\verb|##|) of the preprocessor is used extensively to build pieces of valid
+C code. The example shows how the \verb|name| parameter is concatenated to
+create the name of the generated function, and the \verb|suffix| parameter is
+concatenated to create a valid \verb|ErisType| (listing \vref{lst:ErisType})
+value. A valid expansion of the above macro is:
+
+\begin{ccode*}{samepage=true}
+MAKE_TYPEINFO_IS_TYPE (S32, s32, int32_t)
+\end{ccode*}
+
+\noindent
+which generates the following valid C function:
+
+\begin{ccode*}{samepage=true}
+  bool eris_typeinfo_is_s32 (const ErisTypeInfo *info)
+  { return info->type == ERIS_TYPE_S32; }
+\end{ccode*}
+
+\noindent The \emph{enumerator macro} is made by grouping a set of macro
+expansions like the one above. The key is using a generic name for the
+generator macro, which will be passed as a parameter. The next listing defines
+an enumerator which expands a generator \verb|F| for each signed integer type:
+
+\begin{ccode*}{samepage=true}
+#define INTEGER_S_TYPES(F) \
+    F (S8,  s8,  int8_t  ) \
+    F (S16, s16, int16_t ) \
+    F (S32, s32, int32_t ) \
+    F (S64, s64, int64_t )
+\end{ccode*}
+
+\noindent Using the above definition, an expansion of the \emph{enumerator
+macro} causes multiple expansions at once of the \emph{generator macro} passed
+as \verb|F|, which in turn creates as many functions as elements in the
+enumerator macro. In this example, using generator macros reduces the amount
+of code that the programmer must write manually close to one fourth of the
+original.
+
+Another use case for generator macros is creating the code for cases in
+a \Mc|switch| statement. Instead of constructing the code for an entire
+function at a time, only a single \Mc|case| label and its associated is
+generated. This is done in the following example:
+
+\begin{ccode*}{samepage=true}
+#define MAKE_SIGNED_TYPE_CASE(suffix, name, ctype) \
+    case ERIS_TYPE_ ## suffix: return true;
+
+bool eris_type_is_signed (ErisType type) {
+  switch (type) {
+    INTEGER_S_TYPES (MAKE_SIGNED_TYPE_CASE)
+    default: return false;
+  }
+}
+\end{ccode*}
 

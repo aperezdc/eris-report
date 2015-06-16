@@ -131,21 +131,31 @@
 \usepackage{booktabs}
 
 % Pretty code listings
+\usepackage{scrhack}  % Needed to use Minted w/KOMA-Script
 \usepackage{minted}
 \setminted{
-  fontsize        = \small,
-  autogobble      = true,
-  breaklines      = true,
-  codetagify      = true,
-  encoding        = utf-8,
-  outencoding     = utf-8,
-  frame           = leftline,
-  framerule       = 5pt,
-  framesep        = 0.65em,
-  xleftmargin     = 1em,
-  xrightmargin    = 1em,
-  rulecolor       = \color{lightgrey},
+  autogobble   = true,
+  breaklines   = true,
+  codetagify   = true,
+  encoding     = utf-8,
+  outencoding  = utf-8,
+  frame        = leftline,
+  framerule    = 5pt,
+  framesep     = 0.65em,
+  xleftmargin  = 1em,
+  xrightmargin = 1em,
+  rulecolor    = \color{lightgrey},
 }
+\newmintinline[Mc]{c}{}
+\newminted{c}{
+  fontsize = \small,
+  baselinestretch = 1.0,
+}
+\newminted{lua}{
+  fontsize = \small,
+  baselinestretch = 1.0,
+}
+
 
 \include{hyphenation}
 
@@ -290,5 +300,7 @@ down to upcoming generations.
 \backmatter
 \cleardoublepage
 \printglossaries
+
+\include{bibliography}
 
 \end{document}

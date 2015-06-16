@@ -8,6 +8,7 @@ rule texpdf
 build memoir.pdf : texpdf $
 contextualization.tex     $
 implementation.tex        $
+bibliography.tex          $
 introduction.tex          $
 conclusions.tex           $
 certificate.tex           $

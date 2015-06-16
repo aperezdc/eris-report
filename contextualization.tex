@@ -1,4 +1,4 @@
-% vim: ft=tex spell spelllang=en
+% vim: ft=tex spell spelllang=en ts=2 sw=2
 
 \chapter{Contextualization}
 % TODO: \minitoc ?
@@ -13,23 +13,46 @@ languages and tools of the present times, all of them enable humans to
 
 \section{Dynamic Programming Languages}
 
-With  of faster computer
+Dynamic languages are a family of high-level programming languages which,
+at runtime, execute programming behaviors that other programming languages
+perform during compilation. These behaviors could include extension of the
+program, by adding new code, by extending objects and definitions, or by
+modifying the type system. Support for these operations is provided
+directly by the language. Most dynamic languages are also dynamically
+typed, and are frequently called “scripting languages”.
 
+Popular contemporary scripting languages include Perl, Python, PHP, the
+ubiquitiuos JavaScript, and of course Lua (described in
+\autoref{sec:lua-programming-lang}). Many of their features were first
+implemented as native features of the Lisp programming language, which itself
+is dynamic.
+
+Dynamic programming languages have grown in popularity in the last decades,
+programmers like them for their expressiveness, which allows for higher
+productivity, and the ever increasing computing power of computers makes it
+feasible to use them for performance-critical tasks traditionally left for
+static compiled languages. The development of novel compilation techniques
+aimed at this family of languages, and the relentless improvement of their
+virtual machines (see \autoref{sec:virtual-machines}), has contributed as well
+to increase widespread adoption.
 
 \subsection{Virtual Machines}
+	\label{sec:virtual-machines}
+
 
 \subsection{JIT Compilers}
+	\label{sec:jit-compilers}
 
 
 \subsection{The Lua programming language}
+	\label{sec:lua-programming-lang}
 
 The Lua language is a “powerful, fast, lightweight, embeddable scripting
-language”\footnote{\url{http://www.lua.org/about.html}}. It was initially
-created as a data description language at
-\href{http://www.puc-rio.br/}{PUC-Rio}, and has since evolved into a general
-purpose programming language. It has been used in industrial applications
-(e.g. Adobe Lightroom) and it has seen widespread usage in the video games
-industry.
+language” \cite{lua-about}. It was initially created as a data description
+language at \gls{PUC-Rio}, and has since evolved into
+a general purpose programming language. It has been used in industrial
+applications (e.g. Adobe Lightroom) and it has seen widespread usage in the
+video games industry.
 
 \section{Binding Native Code to Lua}
 
@@ -81,12 +104,13 @@ The “Executable and Linkable Format” (ELF, formerly called “Extensible Lin
 Format”) is a common standard file format for executable programs, object
 code, shared libraries, and even core dumps. Since its publication as part of
 the System V Release 4 (SVR4) Application Binary Interface (ABI) specification
+\cite[c.~4]{elfspec-sysv}
 it has been adopted by many Unix-like (Solaris, most of the BSD variants,
 GNU/Linux), and non-Unix operating systems (most notably, OpenVMS, BeOS, and
 its successor Haiku).
 
 \subsection{DWARF}
 
-The DWARF \href{http://dwarfstd.org}{specification}
+The DWARF Specification \cite{dwarfspecv4}
 
 
