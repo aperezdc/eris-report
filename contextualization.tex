@@ -15,7 +15,7 @@ languages and tools of the present times, all of them enable humans to
 
 Dynamic languages are a family of high-level programming languages which,
 at runtime, execute programming behaviors that other programming languages
-perform during compilation. These behaviors could include extension of the
+perform during compilation. Runtime behaviors could include extension of the
 program, by adding new code, by extending objects and definitions, or by
 modifying the type system. Support for these operations is provided
 directly by the language. Most dynamic languages are also dynamically
@@ -36,12 +36,54 @@ aimed at this family of languages, and the relentless improvement of their
 virtual machines (see \autoref{sec:virtual-machines}), has contributed as well
 to increase widespread adoption.
 
-\subsection{Virtual Machines}
-	\label{sec:virtual-machines}
+\subsection{Virtual Machines as Runtime Environments}
+  \label{sec:virtual-machines}
+
+A \gls{VM} is an \gls{emulation} of a particular computer system based on its
+architecture. \emph{System virtual machines} provide a complete substitute for
+the real machine, are targeted towards the execution of complete operating
+systems and software stacks. On the other hand, \emph{process virtual
+machines} execute a single computer program by providing an execution
+environment suitable for a particular programming language, which can be
+platform-independent.
+
+Process \gls{VM}s provide a so called \emph{runtime environment}. They run as
+a normal application inside the host operating system. This approach has
+several advantages:
+
+\begin{itemize}
+	\item Provides a platform-independent programming environment,
+		abstracting away details of the underlying hardware or operating system,
+		potentially allowing a program to execute in the same way on any platform.
+	\item The level of abstraction provided by the \gls{VM} is higher than that
+		of a low-level \gls{ISA}, which allows it to provide services rarely
+		available in real machines (e.g. automatic memory management).
+	\item There is an additional level of isolation between the operating system
+		and the execution environment. This allows discretionary control over the
+		executed code, which is confined to the bounds allowed by the \gls{VM}.
+\end{itemize}
+
+The main downside of virtual machines is the lower performance compared to
+execution of native code. To achieve levels of performance comparable to
+compiled languages can be obtained using a combination using \gls{JIT}
+compilation (see \autoref{sec:jit-compilers} below), and compiler-based
+optimization techniques especifically designed for them.
+
+In some regards, the additional level of isolation provided by a \gls{VM}
+could be a nuisance due to the fact that it could prevent programs from
+accessing resources (either hardware-based, or provided by the host system)
+needed for its operation. For this reason, many virtual machines provide
+a \gls{FFI}: a mechanism to call-out native code and re-gain access to the
+whole system, while still being under the control and supervision of the
+\gls{VM}.
 
 
 \subsection{JIT Compilers}
 	\label{sec:jit-compilers}
+
+
+\subsection{Foreign Function Interfaces}
+	\label{sec:context-ffis}
 
 
 \subsection{The Lua programming language}
@@ -49,10 +91,25 @@ to increase widespread adoption.
 
 The Lua language is a “powerful, fast, lightweight, embeddable scripting
 language” \cite{lua-about}. It was initially created as a data description
-language at \gls{PUC-Rio}, and has since evolved into
-a general purpose programming language. It has been used in industrial
-applications (e.g. Adobe Lightroom) and it has seen widespread usage in the
-video games industry.
+language at \gls{PUC-Rio}, to be used for in-house software development, and
+has since evolved into a general purpose programming language. It has been
+used in proffessional applications (e.g. Adobe Lightroom) and it has seen
+widespread usage in the video games industry (e.g. World Of Warcraft). The
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.25\textwidth]{img/lua-logo}
+	\caption{The Lua logo. “Lua” means “moon” in Portuguese.}
+	\label{fig:lua-logo}
+\end{figure}
+
+Lua, starting in version 5.0~\cite{lua50-impl}, uses a register-based virtual
+machine. This allows for improved performance by avoiding excessive copying of
+values on stack \emph{pop} and \emph{push} operations. Traditionally, most
+virtual machines intended for execution of languages are stack based,
+including heavyweight, enterprise-proven systems like the Java™ JVM, and
+Microsoft's .NET environment.
+
 
 \section{Binding Native Code to Lua}
 

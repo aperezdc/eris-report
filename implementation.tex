@@ -164,6 +164,37 @@ order to make them share the same memory space.
   \label{lst:ErisType}
 \end{listing}
 
+
+\begin{table}[f]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    C Construct     & DWARF DIE                    & \Eris* Type            \\
+    \midrule
+    \Mc|void|       & ø                            & \Mc|ERIS_TYPE_VOID|    \\
+    \Mc|bool|       & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_BOOL|    \\
+    \Mc|int8_t|     & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S8|      \\
+    \Mc|uint8_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U8|      \\
+    \Mc|int16_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S16|     \\
+    \Mc|uint16_t|   & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U16|     \\
+    \Mc|int32_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S32|     \\
+    \Mc|uint32_t|   & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U32|     \\
+    \Mc|int64_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S64|     \\
+    \Mc|uint64_t|   & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U64|     \\
+    \Mc|float|      & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_FLOAT|   \\
+    \Mc|double|     & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_DOUBLE|  \\
+    \Mc|typedef|... & \verb|DW_TAG_typedef|        & \Mc|ERIS_TYPE_TYPEDEF| \\
+    \Mc|const|...   & \verb|DW_TAG_const_type|     & \Mc|ERIS_TYPE_CONST|   \\
+    ...\Mc|*|       & \verb|DW_TAG_pointer_type|   & \Mc|ERIS_TYPE_POINTER| \\
+    ...\Mc|[n]|     & \verb|DW_TAG_array_type|     & \Mc|ERIS_TYPE_ARRAY|   \\
+    \Mc|struct|...  & \verb|DW_TAG_structure_type| & \Mc|ERIS_TYPE_STRUCT|  \\
+    \Mc|union|...   & \verb|DW_TAG_union_type|     & \Mc|ERIS_TYPE_UNION|   \\
+    \Mc|enum|...    & \verb|DW_TAG_enumration_type|& \Mc|ERIS_TYPE_ENUM|    \\
+    \bottomrule
+  \end{tabular}
+  \caption{Mapping of C types, DWARF DIEs and \Mc|ErisType|.}
+\end{table}
+
 \noindent
 The following sections describe in detail the members of \verb|ErisTypeInfo|.
 

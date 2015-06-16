@@ -1,5 +1,6 @@
 
 rule texpdf
+  pool = console
   description = TEX ${tex_main}
   command = lualatex --shell-escape ${tex_main} $
          && makeglossaries ${tex_main}          $
@@ -10,9 +11,11 @@ rule svg2pdf
   command = inkscape -z -C -T -A ${out} ${in}
 
 build img/eris-orbit.pdf : svg2pdf img/eris-orbit.svg
+build img/lua-logo.pdf   : svg2pdf img/lua-logo.svg
 
 build memoir.pdf : texpdf $
 img/eris-orbit.pdf        $
+img/lua-logo.pdf          $
 contextualization.tex     $
 implementation.tex        $
 bibliography.tex          $

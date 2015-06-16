@@ -59,6 +59,16 @@
 	},
 }
 
+\newglossaryentry{emulation}{
+	name={emulation},
+	description={
+		Piece of hardware or software that enables one computer system (called
+		the \emph{host}) to behave like another computer system (called the
+		\emph{guest}) which enables the host system to run software or use
+		peripheral devices designed for the guest system
+	},
+}
+
 \newglossaryentry{gls-TUE}{
 	name={Type Unit Entry},
 	description={A particular kind of DWARF DIE that contains information
@@ -66,6 +76,19 @@
 }
 \newacronym[see={[Glossary:]{gls-TUE}}]{TUE}{TUE}
 	{Type Unit Entry\glsadd{gls-TUE}}
+
+\newglossaryentry{gls-ISA}{
+	name={Instruction Set Architecture},
+	description={
+		Part of the computer architecture related to programming, including
+		the native data types, instructions, registers, addressing modes,
+		memory architecture, interrupt and exception handling, and external
+		I/O. An ISA includes a specification of the machine language, and
+		the native commands implemented by a particular processor.
+	},
+}
+\newacronym[see={[Glossary:]{gls-ISA}}]{ISA}{ISA}
+	{Instruction Set Architecture\glsadd{gls-ISA}}
 
 
 \newacronym{ELF}{ELF}{Executable and Linkable Format}
@@ -79,6 +102,7 @@
 \newacronym{PIC}{PIC}{Position-Independent Code}
 \newacronym{VLA}{VLA}{Variable-Length Array}
 \newacronym{PUC-Rio}{PUC-Rio}{Pontifícia Universidade Católica do Rio de Janeiro}
+\newacronym{VM}{VM}{Virtual Machine}
 
 %
 % Those are just simple command-abbreviations to format pieces of text which
