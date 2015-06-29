@@ -58,56 +58,43 @@
 \usepackage{fontspec}
 \defaultfontfeatures{Ligatures=TeX}
 
-% \setsansfont{Alegreya Sans}[SmallCapsFont=* SC]
-% \setmainfont{Alegreya}[SmallCapsFont=* SC]
+\setmainfont{Andada}[
+  Path           = fonts/,
+  Extension      = .ttf,
+  UprightFont    = *-Regular,
+  ItalicFont     = *-Italic,
+  BoldFont       = *-Bold,
+  BoldItalicFont = *-BoldItalic,
+  SmallCapsFont  = *SC-Regular,
+]
 
-\setmainfont{Andada}[SmallCapsFont=* SC]
-% \setsansfont{Overpass}
+\newfontfamily\RlwLight{Raleway}[
+  Path           = fonts/,
+  Extension      = .ttf,
+  UprightFont    = *-ExtraLight,
+  ItalicFont     = *-ExtraLight-Italic,
+  BoldFont       = *-Light,
+  BoldItalicFont = *-Light-Italic,
+]
 
-% \setmainfont{PermianSlabSerifTypeface}
-% \setmainfont{PermianSerifTypeface}
-% \setsansfont{PermianSansTypeface}
+\setsansfont{Raleway}[
+  Path           = fonts/,
+  Extension      = .ttf,
+  UprightFont    = *-Regular,
+  ItalicFont     = *-Regular-Italic,
+  BoldFont       = *-Bold,
+  BoldItalicFont = *-Bold-Italic,
+]
 
-% \setsansfont{Carlito}
-% \setsansfont{Istok}
-% \setsansfont{Lato}
-
-% \setmainfont{Bitter}
-% \setmainfont{Brill}
-% \setmainfont{Libre Caslon Text}
-
-\newfontfamily\RlwLight[
-  Path           = {fonts/},
-  ItalicFont     = {Raleway-ExtraLight-Italic},
-  BoldFont       = {Raleway-Light},
-  BoldItalicFont = {Raleway-Light-Italic}]{Raleway-ExtraLight}
-\setsansfont[
-  Path           = {fonts/},
-  ItalicFont     = {Raleway-Regular-Italic},
-  BoldFont       = {Raleway-Bold},
-  BoldItalicFont = {Raleway-Bold-Italic},
-]{Raleway-Regular}
-
-% \setmonofont[Scale=MatchLowercase]{Input Mono}
-% \setmonofont[Scale=MatchLowercase]{Source Code Pro}
-% \setmonofont[Scale=MatchUppercase]{PragmataPro}
-% \setmonofont[Scale=MatchLowercase]{Akkurat-Mono}
-% \setmonofont[Scale=MatchUppercase]{Inconsolatazi4}
-% \setmonofont[Scale=MatchLowercase]{Inconsolatazi4}
-
-% \setmonofont[Scale=MatchLowercase]{PT Mono}
-% \setmonofont[Scale=MatchLowercase]{Fira Code}
-% \setmonofont[Scale=MatchUppercase]{Input Mono Condensed}
-% \setmonofont[Scale=MatchUppercase]{Luxi Mono}
-% \setmonofont{Input Mono Condensed}
-
-\newfontfamily\InpLight[
-	ItalicFont = {Input Mono Narrow Light Italic},
-	BoldFont   = {Input Mono Narrow Regular},
-	BoldItalicFont = {Input Mono Narrow Italic},
-]{Input Mono narrow Light}
-
-\setmonofont[Scale=MatchLowercase]{Input Mono Narrow Light}
+\setmonofont{InputMonoNarrow}[
+  Scale          = MatchLowercase,
+  Path           = fonts/,
+  Extension      = .ttf,
+  UprightFont    = *-Light,
+  ItalicFont     = *-LightItalic,
+  BoldFont       = *-Regular,
+  BoldItalicFont = *-Italic,
+]
 
 
 \usepackage{setspace}
