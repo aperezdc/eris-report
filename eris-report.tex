@@ -77,10 +77,16 @@
 % \setmainfont{Libre Caslon Text}
 
 \newfontfamily\RlwLight[
-	ItalicFont     = {Raleway ExtraLight Italic},
-	BoldFont       = {Raleway Light},
-	BoldItalicFont = {Raleway Light Italic}]{Raleway ExtraLight}
-\setsansfont{Raleway}
+  Path           = {fonts/},
+  ItalicFont     = {Raleway-ExtraLight-Italic},
+  BoldFont       = {Raleway-Light},
+  BoldItalicFont = {Raleway-Light-Italic}]{Raleway-ExtraLight}
+\setsansfont[
+  Path           = {fonts/},
+  ItalicFont     = {Raleway-Regular-Italic},
+  BoldFont       = {Raleway-Bold},
+  BoldItalicFont = {Raleway-Bold-Italic},
+]{Raleway-Regular}
 
 % \setmonofont[Scale=MatchLowercase]{Input Mono}
 % \setmonofont[Scale=MatchLowercase]{Source Code Pro}
