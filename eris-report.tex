@@ -27,6 +27,7 @@
 \definecolor{fadedbrown}{rgb}{0.85, 0.1, 0.1}
 \definecolor{darkmagenta}{rgb}{0.65, 0.0, 0.65}
 \definecolor{lightblue}{rgb}{0.5, 0.75, 1.0}
+\definecolor{linkboxcolor}{rgb}{0.8, 0.8, 0.85}
 
 % \def\checkmark{\tikz\fill (0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
 \def\checkmark{\tikz\fill
@@ -43,8 +44,10 @@
 
 % Make a TOC in the generated PDF
 \usepackage[pdfstartview=FitH,
-	unicode=true,
-	linktoc=all]{hyperref}
+  linkbordercolor=linkboxcolor,
+  urlbordercolor=linkboxcolor,
+  unicode=true,
+  linktoc=all]{hyperref}
 \usepackage[open]{bookmark}
 \bookmarksetup{color=blue}
 % \usepackage{minitoc}
@@ -142,11 +145,14 @@
   fontsize = \small,
   baselinestretch = 1.0,
 }
+\newmintinline[Mlua]{lua}{}
 \newminted{lua}{
   fontsize = \small,
   baselinestretch = 1.0,
 }
 
+
+\usepackage[shadow,obeyFinal,textsize=footnotesize]{todonotes}
 
 \include{hyphenation}
 
@@ -219,21 +225,8 @@ Laura Milagros Castro Souto\relax}
 
 \frontmatter
 
-% General information
-\cleardoublepage
-\chapter*{General Information}
-
-\vspace{1cm}
-\begin{tabular}{p{0.35\textwidth}p{0.65\textwidth}}
-	\textbf{\textit{Title:}} & \textbf{\PfcTitle} \vspace{0.5cm} \\
-	\textit{Project Kind:} & Classic engineering project. \vspace{0.5cm} \\
-	\textit{Student:}      & \PfcAuthor \vspace{0.5cm} \\
-	\textit{Director:}     & \PfcDirector \vspace{0.5cm} \\
-	\textit{Tribunal members:} & \vspace{3cm} \\
-	\textit{Resevere members:} & \vspace{3cm} \\
-	\textit{Reading date:} & \vspace{0.5cm}   \\
-	\textit{Mark:} & \\
-\end{tabular}
+\clearpage
+\listoftodos
 
 % Dedication
 \cleardoublepage
@@ -281,12 +274,12 @@ upcoming generations.
 \chapter*{Keywords}
 \begin{itemize}
 	\item Automatic binding generation.
-	\item \gls{ELF}.
-	\item \gls{DWARF}.
+	\item ELF.
+	\item DWARF.
 	\item Debugging information.
 	\item Lua programming language.
 	\item Virtual machines.
-	\item \gls{FFI}.
+	\item FFI.
 	% \item JIT code generation.
 \end{itemize}
 

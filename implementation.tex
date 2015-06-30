@@ -4,6 +4,8 @@
 
 \section{Prerequisites}
 
+\todo[inline]{Move this to an appendinx with manual / installation notes}.
+
 Instead of providing its own implementation for certain functionality, \Eris*
 uses existing, proved software components.
 
@@ -24,24 +26,24 @@ uses existing, proved software components.
 	\label{tab:eris-dependencies}
 \end{table}
 
-\autoref{tab:eris-dependencies} shows dependencies expected to be installed in
-the system. The items marked (\inlinesymbol\Tick) as \emph{bundled} are not including in
-the source repository, but the build system includes support for downloading
-tarballs with the source code and doing a local build. When enabled, bundled
-dependencies will be automatically downloaded, built, and used, instead
-instead of the versions provided by the system. In the case of using
-\verb|libdward| bundled, it will be statically linked.
-See~\autoref{sec:running-configure} for instructions for enabling bundled
-libraries.
+\autoref{tab:eris-dependencies} shows the dependencies expected to be
+installed in the system. The items marked (\inlinesymbol\Tick) as
+\emph{bundled} are not included in the source repository, but the build system
+includes support for downloading tarballs with the source code and doing
+a local build. When enabled, bundled dependencies will be automatically
+downloaded, built, and used instead instead of the versions provided by the
+system. In the case of using \verb|libdwarf| bundled, it will be statically
+linked. See~\autoref{sec:running-configure} for instructions for enabling
+bundled libraries. This is particularly useful for systems which do not
+provide Lua 5.3 packages (for example, the case Debian and Ubuntu at the time
+of writing).
 
 \begin{table}
   \begin{tabular}{ccp{0.4\textwidth}}
   \toprule
 	Distribution & Installation Command & Packages \\
 	\midrule
-	Debian, Ubuntu\footnote{Those systems do not provide Lua 5.3 packages
-	at the time of writing, therefore usage of of the bundled version is
-	recommended. See~\autoref{sec:running-configure} for instructions.} &
+	Debian, Ubuntu &
     \verb|apt-get install| &
     \verb|libdwarf-dev| \verb|ninja-build| \\
 	Arch Linux & \verb|pacman -S| & \verb|libdwarf| \verb|ninja| \verb|lua| \\
@@ -55,6 +57,12 @@ libraries.
 by popular GNU/Linux distributions. Some versions of Debian (and derivatives
 like Ubuntu) include only a static version of \verb|libdwarf| in the packages,
 most likely not built as \gls{PIC}, which is a requirement.
+
+
+\section{Build Tools}
+
+\subsection{Autoconfiguration}
+  \label{sec:running-configure}
 
 \section{Project Source Structure}
 
@@ -82,42 +90,36 @@ The \Eris* source code
 \end{figure}
 
 
-\section{Build Tools}
-
-\subsection{Autoconfiguration}
-  \label{sec:running-configure}
-
 
 \section{Type Representation}
 
 Converting values from C to Lua, and vice versa, is one of the most important
-tasks performed by \Eris*: it is needed to make C values accessible from Lua,
-and for converting function parameters and return values when invoking
-C functions. Therefore, it is needed to read this information from the DWARF
-debugging information (see \nameref{sec:debuginfo-structure}), and keep it
-around in a suitable data structure. This structure must be:
+tasks performed by \Eris*: C values need to be made accessible from Lua.
+Therefore, this information needs to be read from the DWARF debugging
+information (see \nameref{sec:debuginfo-structure}), and kept around in
+a suitable data structure. This structure must be:
 
 \begin{itemize}
   \item Exhaustive, to hold all the needed information.
   \item Compact, to minimize memory usage.
 \end{itemize}
 
-Describing base types is possible using just an enumerated type: there isa
-fixed amount of them, and the characteristics (size, name, etc) are well
-known. The challenging part is representing user defined types
-(\mintinline{c}{struct}, \mintinline{c}{enum}, \mintinline{c}{union}), and
-types derived from other (pointers, arrays).
+Describing base types is possible using just an enumerated type: there is
+a fixed amount of them, and the characteristics (size, name, etc) are well
+known. The challenging part is representing user defined types (\Mc|struct|,
+\Mc|enum|, \Mc|union|), and derived types (pointers, arrays).
 
 The data structure for describing types is \verb|ErisTypeInfo| (listing
-\vref{lst:ErisTypeInfo}). It is a tagged \mintinline{c}{struct}, with the kind
-of type as the tag (\verb|ERIS_TYPE_S32|, \verb|ERIS_TYPE_STRUCT|, etc; the
-complete list of values can be seen in listing \vref{lst:ErisType}). The
-contained data will vary depending on the value of the \emph{kind} tag. The
-members for all possible values are grouped in an \mintinline{c}{union} in
-order to make them share the same memory space.
+\vref{lst:ErisTypeInfo}). It is a tagged \Mc|struct|, with the tag
+indicatingthe type kind (\verb|ERIS_TYPE_S32| for 32-bit signed integers,
+\verb|ERIS_TYPE_STRUCT| for a \Mc|struct|, etc; the complete list of values
+can be seen in listing \vref{lst:ErisType}). The contained data will vary
+depending on the value of the \emph{kind} tag. The members for all possible
+values are grouped in an \mintinline{c}{union} in order to make them share the
+same memory space.
 
-\begin{listing}[h]
-  \begin{minted}{c}
+\begin{listing}[H]
+  \begin{ccode}
     struct _ErisTypeInfo {
       ErisType type;
       union {
@@ -130,14 +132,14 @@ order to make them share the same memory space.
       };
     };
     typedef struct _ErisTypeInfo ErisTypeInfo;
-  \end{minted}
+  \end{ccode}
   \caption{\texttt{ErisTypeInfo}.}
   \label{lst:ErisTypeInfo}
 \end{listing}
 
 \begin{listing}[f]
   \centering
-  \begin{minted}{c}
+  \begin{ccode}
     typedef enum {
       ERIS_TYPE_VOID,    /* void        */
       ERIS_TYPE_BOOL,    /* _Bool       */
@@ -159,7 +161,7 @@ order to make them share the same memory space.
       ERIS_TYPE_UNION,   /* union …     */
       ERIS_TYPE_ENUM,    /* enum …      */
     } ErisType;
-  \end{minted}
+  \end{ccode}
   \caption{\texttt{ErisType} enumeration.}
   \label{lst:ErisType}
 \end{listing}
@@ -211,7 +213,7 @@ The following sections describe in detail the members of \verb|ErisTypeInfo|.
 \noindent
 Even though it is sufficient to provide type kind codes for all the base types
 as discussed before, providing the possibility of querying their \verb|name|
-and \verb|size| is a nice detail, at a very small cost: the
+and \verb|size| is a convenient feature, at a very small cost: the
 \verb|ErisTypeInfo| value for each one of the base types is a singleton,
 defined as follows:
 
@@ -227,9 +229,8 @@ defined as follows:
   });
 \end{ccode*}
 
-\noindent
-In practice, to avoid having to write the definitions of all the base types,
-the aid of the C preprocessor and a couple generator macros are used (see
+\noindent In practice, to avoid writing the definitions of all the base types,
+the C preprocessor and a couple generator macros are used (see
 \autoref{sec:cpp-abuse-genmacros}).
 
 
@@ -244,10 +245,9 @@ the aid of the C preprocessor and a couple generator macros are used (see
 
 \noindent
 Pointers are represented by referencing the \verb|ErisTypeInfo| of the
-pointed-to type. Thus, it is the only member in \mintinline{c}{struct
-TI_pointer}. The size of a pointer value is platform-dependant, but well-known
-and constant for each platform, and is the value of the C expression
-\mintinline{c}{sizeof(void*)}.
+pointed-to type. Thus, it is the only member in \Mc|struct TI_pointer|. The
+size of a pointer value is platform dependant, but well known and constant for
+each platform, and is the value of the C expression \Mc|sizeof(void*)|.
 
 
 \subsection{Array Representation}
@@ -266,7 +266,7 @@ size of an array value can be calculated multiplying the size of the item type
 by the number of items in the array.
 
 
-\subsection{User-defined Type Representation}
+\subsection{User Defined Type Representation}
 
 \begin{ccode*}{samepage=true}
   struct TI_compound {
@@ -277,13 +277,12 @@ by the number of items in the array.
   };
 \end{ccode*}
 
-\noindent
-This record type will represent all user-defined types: enumerated types
+\noindent This record type represents all user defined types: enumerated types
 (\Mc:enum:), record types (\Mc:struct:), and union types (\Mc:union:):
 
 \begin{description}
   \item [\Mc|name|] \hfill \\
-    User-defined types are usually given a name, but it is optional and in
+    User defined types are usually given a name, but it is optional and in
     this case the value will be \Mc|NULL|.
   \item [\Mc|size|] \hfill \\
     Contains the size of the type, in bytes.
@@ -374,8 +373,10 @@ local Geometry = eris.wrap("libgeometry.so")
 local point = Geometry.point { x = 1, y = -1 }
 \end{luacode}
 
+\todo[inline]{Complete this section}
 
-\section{Bits \& Pieces}
+
+\section{Miscellanea}
 
 This section describes assorted techniques used in the implementation of
 \Eris* which do not fall under a common umbrella, yet they deserve to be
@@ -444,8 +445,8 @@ original.
 
 Another use case for generator macros is creating the code for cases in
 a \Mc|switch| statement. Instead of constructing the code for an entire
-function at a time, only a single \Mc|case| label and its associated is
-generated. This is done in the following example:
+function at a time, only a single \Mc|case| label and its associated
+statements are generated. This is done in the following example:
 
 \begin{ccode*}{samepage=true}
 #define MAKE_SIGNED_TYPE_CASE(suffix, name, ctype) \

@@ -1,32 +1,31 @@
-% vim: ft=tex ts=2 sw=2 spell spelllang=es
+% vim: ft=tex ts=2 sw=2 spell spelllang=en
 \chapter*{Summary}
 
-The objective of this project is implementing an automated mechanism that,
+The objective of this project is to implement an automated mechanism that,
 using the DWARF debugging information from ELF shared objects, allows the Lua
-virtual machine to call native functions from the shared object implemented in
-the C programming language. The process has to be automatic, in the sense that
-the user will not need to write code convert values passed between Lua and the
-invoked C functions, and a C functions will behave essentially like Lua from
+virtual machine to call native functions from shared objects implemented in
+the C programming language. The process is automatic, in the sense that the
+user does not need to write code to convert values passed between Lua and the
+invoked C functions, and the C functions will behave essentially like Lua from
 the user point of view. The ultimate goal is to allow transparent usage of
-existing libraries from Lua.
+existing C libraries from Lua.
 
 Lua has been chosen because it provides a clean C interface to its \gls{VM},
 which has been designed from the ground up to be embedded in larger projects.
 The implementation is also compact (under 16.000 lines of code), which makes
-it feasible to gain in-depth knowledge of its innerworkings. Lua has also
-grown in popularity in the last years as its adoption has skyrocketed in the
-games industry.
+it feasible to gain in-depth knowledge of its innerworkings in a relatively
+short time. Lua has also grown in popularity in the last years as its adoption
+has skyrocketed in the game industry.
 
 The reason to focus on the combination of debugging information in DWARF
 format contained in ELF shared objects is that they are a widespread, standard
 configuration used by the majority of contemporary Unix-like operating
-systems. The target system during development will be a GNU/Linux system
+systems. The target system during development has been a GNU/Linux system
 running on the Intel x86\_64 architecture, which also uses the aforementioned
 configuration, though provisions are to be included in the design to ease
 future porting efforts for other platforms.
 
 In order to validate the correctness of the implementation, an automated test
-suite is also provided. The unit tests will be also used as regression tests,
-to ensure that modifications to the system do not affect the correctness of
-the implementation.
-
+suite was also developed. Unit tests were used also as regression tests, to
+ensure that modifications to the system did not introduce programming errors
+in the implementation.

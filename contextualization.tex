@@ -13,13 +13,14 @@ languages and tools of the present times, all of them enable humans to
 
 \section{Dynamic Programming Languages}
 
-Dynamic languages are a family of high-level programming languages which,
-at runtime, execute programming behaviors that other programming languages
-perform during compilation. Runtime behaviors could include extension of the
-program, by adding new code, by extending objects and definitions, or by
-modifying the type system. Support for these operations is provided
-directly by the language. Most dynamic languages are also dynamically
-typed, and are frequently called “scripting languages”.
+Dynamic languages \todo{Add bibliographic reference} are a family of
+high-level programming languages which, at runtime, execute programming
+behaviors that other programming languages perform during compilation. Runtime
+behaviors could include extension of the program, by adding new code, by
+extending objects and definitions, or by modifying the type system. Support
+for these operations is provided directly by the language. Most dynamic
+languages are also dynamically typed, and are frequently called “scripting
+languages”.
 
 Popular contemporary scripting languages include Perl, Python, PHP, the
 ubiquitiuos JavaScript, and of course Lua (described in
@@ -27,11 +28,11 @@ ubiquitiuos JavaScript, and of course Lua (described in
 implemented as native features of the Lisp programming language, which itself
 is dynamic.
 
-Dynamic programming languages have grown in popularity in the last decades,
-programmers like them for their expressiveness, which allows for higher
+Dynamic programming languages have grown in popularity in the last decades.
+Programmers like them for their expressiveness, which allows for higher
 productivity, and the ever increasing computing power of computers makes it
 feasible to use them for performance-critical tasks traditionally left for
-static compiled languages. The development of novel compilation techniques
+statically compiled languages. The development of novel compilation techniques
 aimed at this family of languages, and the relentless improvement of their
 virtual machines (see \autoref{sec:virtual-machines}), has contributed as well
 to increase widespread adoption.
@@ -41,7 +42,7 @@ to increase widespread adoption.
 
 A \gls{VM} is an \gls{emulation} of a particular computer system based on its
 architecture. \emph{System virtual machines} provide a complete substitute for
-the real machine, are targeted towards the execution of complete operating
+the real machine, and re targeted towards the execution of complete operating
 systems and software stacks. On the other hand, \emph{process virtual
 machines} execute a single computer program by providing an execution
 environment suitable for a particular programming language, which can be
@@ -63,11 +64,11 @@ several advantages:
 		executed code, which is confined to the bounds allowed by the \gls{VM}.
 \end{itemize}
 
-The main downside of virtual machines is the lower performance compared to
-execution of native code. To achieve levels of performance comparable to
-compiled languages can be obtained using a combination using \gls{JIT}
-compilation (see \autoref{sec:jit-compilers} below), and compiler-based
-optimization techniques especifically designed for them.
+The main downside of virtual machines is the lower performance compared to the
+execution of native code. Performance levels comparable to compiled languages
+can be obtained using a combination of \gls{JIT} compilation (see
+\autoref{sec:jit-compilers}), and compiler-based optimization techniques
+specifically designed for them.
 
 In some regards, the additional level of isolation provided by a \gls{VM}
 could be a nuisance due to the fact that it could prevent programs from
@@ -94,14 +95,116 @@ language” \cite{lua-about}. It was initially created as a data description
 language at \gls{PUC-Rio}, to be used for in-house software development, and
 has since evolved into a general purpose programming language. It has been
 used in proffessional applications (e.g. Adobe Lightroom) and it has seen
-widespread usage in the video games industry (e.g. World Of Warcraft). The
+widespread usage in the video games industry (e.g. World Of Warcraft).
 
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=0.25\textwidth]{img/lua-logo}
-	\caption{The Lua logo. “Lua” means “moon” in Portuguese.}
-	\label{fig:lua-logo}
-\end{figure}
+% \begin{figure}[h]
+% 	\centering
+% 	\includegraphics[width=0.25\textwidth]{img/lua-logo}
+% 	\caption{The Lua logo. “Lua” means “moon” in Portuguese.}
+% 	\label{fig:lua-logo}
+% \end{figure}
+
+\begin{listing}
+  \begin{luacode}
+    -- Create a table, with one key, "age" and 7 as value
+    animal = { age = 7 }
+
+    -- Associate a string value to the "kind" table key
+    animal["kind"] = "cat"
+
+    -- Keys which are valid identifiers can be accessed with "."
+    animal.name = "Doraemon"
+
+    -- The dot "." syntax workds for adding functions to tables
+    function animal.describe(self)
+      print(self.name .. " is a " .. tostring(self.age) ..
+            "-year old " .. self.kind)
+    end
+
+    -- This is equivalent to: animal.describe(animal)
+    animal:describe()  --> Doraemon is a 7-year old cat
+
+    -- Adding a function with colon ":" adds an implicit "self"
+    function animal:furryness()
+      return self.kind == "cat" and "high" or "unknown"
+    end
+
+    animal:furryness()  --> high
+  \end{luacode}
+	\caption{Lua tables being used as objects}
+  \label{lst:lua-example-tables}
+\end{listing}
+
+The main programming paradigm is imperative, but the language supports
+functions as \glspl{first-class-value} and \glspl{closure}, making it possible
+to easily write programs in a functional programming style. Like in
+\gls{pascal}, English words (\Mlua|function|, \Mlua|then|, \Mlua|end|) are
+used as delimiters for language constructs. Another defining characteristic of
+the language is that, by design, it only provides one compound data structure,
+the \emph{table}, which is the basis for all user--defined types. Tables can
+be used as arrays (listing \ref{lst:lua-example-memoize}), structures, and
+objects (listing \ref{lst:lua-example-tables}).
+
+An unique and powerful feature of Lua is its support for \emph{metatables}:
+values may have an associated table (the so-called \emph{metatable}) which
+allows to extend the semantics of language constructs, allowing to define how
+tables behave when arithmetic and relational operators are applied to tables,
+or how table fields are accessed. Listing \vref{lst:lua-example-memoize}
+demostrates how customizing table access can be used to define a
+seemingly--infinite array which contains the $n^{th}$ \gls{fibonacci-number}
+at index $n$. A common use for metatables is enabling support for
+object--oriented programming, using them to define object inheritance chains
+(listing \ref{lst:lua-example-meta-oo}) --- as Lua itself does not have the
+notion of classes, prototypes are used instead, in the Self or JavaScript
+languages.
+
+\begin{listing}
+  \begin{luacode}
+    fib = { 1, 1 }
+    setmetatable(fib, {
+      __index = function (values, n)
+        -- Calculate and memoize the Fibonacci(n)
+        values[n] = values[n - 1] + values[n - 2]
+        return values[n]
+      end
+    })
+    print(fib[10])  --> 55
+  \end{luacode}
+  \caption{\Gls{memoization} and \gls{dynamic-programming} using a Lua metatable}
+	\label{lst:lua-example-memoize}
+\end{listing}
+
+\begin{listing}
+  \begin{luacode}
+    -- Base object describing an unnamed living creature
+    animal = {
+      name = "Unnamed",
+      kind = "living creature",
+      describe = function (self)
+        print(self.name .. " is a " .. self.kind)
+      end,
+    }
+
+    -- When indexing the table passed as first argument, fields will
+    -- be looked up from the "animal" table associated to the "__index"
+    -- key of the metatable. The function returns the first argument.
+    cat = setmetatable({ kind = "cat", name = "Doraemon" },
+                       { __index = animal })
+    dog = setmetatable({ kind = "dog", name = "Snowy", },
+                       { __index = animal })
+
+    -- The :describe() method is searched in "animal"
+    cat:describe()  --> Doraemon is a cat
+    dog:describe()  --> Snowy is a dog
+
+    -- Chained key lookup can be used to make the values from the
+    -- base object the default ones
+    tom = setmetatable({ name = "Tom" }, { __index = animal  })
+    tom:describe()  --> Tom is a living creature
+  \end{luacode}
+  \caption{Lua metatables used for object inheritance}
+  \label{lst:lua-example-meta-oo}
+\end{listing}
 
 Lua, starting in version 5.0~\cite{lua50-impl}, uses a register-based virtual
 machine. This allows for improved performance by avoiding excessive copying of
@@ -130,9 +233,11 @@ the target programming language or virtual machine, making it a
 \emph{build-time} solution.
 
 More than often, binding generators do \emph{not} include a full parser for
-the origin programming language, and they require to be fed a simplified
+the programming language of origin, and they require to be fed a simplified
 version of the code being wrapped. This can be a nuisance for code bases which
 use complex language constructs unsupported by the binding generator.
+
+\todo[inline]{Mention binding generators: SWIG, ToLua(++)}
 
 % \minisec{Example: SWIG}
 %
@@ -146,7 +251,7 @@ use complex language constructs unsupported by the binding generator.
 \subsection{Foreign Function Interfaces}
 
 
-
+\todo[inline]{Mention: GObject-Introspection, LuaJIT FFI}
 % Examples:
 %
 % GObject-Introspection

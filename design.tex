@@ -2,6 +2,8 @@
 \cleardoublepage
 \chapter{Analysis \& Design}
 
+\todo[inline]{Consider moving this to previous chapter}
+
 \section{Analyzing DWARF}
 
 The \gls{DWARF} format was first developed by the Bell Labs for the
@@ -9,16 +11,16 @@ The \gls{DWARF} format was first developed by the Bell Labs for the
 is available under the GNU \gls{FDL}, and its new versions have been
 discussed using public channels of communication, following a
 community-oriented process. Downloadable copies of all the version of
-the specification are available at \url{http://dwarfstd.org}.
+the specification are available at {\small\url{http://dwarfstd.org}}.
 
-All the data provided by debugging information is stored in a hierarchical
-tree-like structure, and each nodes of the tree is called a \gls{DIE}.
-Each DIE consists of an identifying tag, and a series of attributes. The tag
-specifies the class to which an entry belongs, and the attributes define the
-characteristics of the entry. An entry, or a group of entries together,
-provide a description of an entity in the corresponding source code. The
-entries are contained in the \verb|.debug_info| and \verb|.debug_types|
-sections of an object file.
+In \gls{DWARF}, all the data provided by debugging information is stored in
+a hierarchical tree-like structure, and each node of the tree is called
+a \gls{DIE}. Each DIE consists of an identifying tag, and a series of
+attributes. The tag specifies the class to which an entry belongs, and the
+attributes define the characteristics of the entry. An entry, or a group of
+entries together, provide a description of an entity in the corresponding
+source code. The entries are contained in the \verb|.debug_info| and
+\verb|.debug_types| sections of an object file.
 
 
 %%%
@@ -98,10 +100,10 @@ The attributes can reference another DIE, as shown in
 \autoref{fig:die-attr-references}, making it possible to create arbitrary
 links between nodes of the tree. Those explicit links are used extensively to
 group related entries together (for example the \verb|DW_TAG_formal_parameter|
-entries which describe the parameters of a function are chained using
-\verb|DW_AT_sibling| attributes), and to perform \gls{data-deduplication}
-of the debug information (for example, instead of making a new entry for
-the \mintinline{c}{int} type, only one is created and then referenced from other
+entries, which describe the parameters of a function, are chained using
+\verb|DW_AT_sibling| attributes), and to perform \gls{data-deduplication} of
+the debug information (for example, instead of making a new entry for the
+\mintinline{c}{int} type, only one is created and then referenced from other
 entries).
 
 \subsection{Debug Information Structure}
@@ -109,20 +111,19 @@ entries).
 
 This section provides simplified overview of the tree structure formed by the
 debug information entries of a program, which is enough for the goals of this
-project. For complete, detailed information, it is recommended to read the
-DWARFv4 Specification.
-% TODO: Bibliography reference ↑↑
+project. For complete, detailed information, we refer to the DWARFv4
+Specification~\cite{dwardspecv4}.
 
 
 \subsubsection{Location of the Debug Information}
 
-\Gls{ELF} objects have the ability of describing their contents using
-\emph{segments}, and \emph{sections}. Segments contain information used at
-runtime for the execution of the code, and sections contain data about the
-code itself. Sections contain data used \emph{offline} (i.e. not at runtime).
-Sections have arbitrary names and contents. Debugging information is not
-strictly needed at runtime for the execution of the program: it is considered
-ancillary, and is stored in sections.
+The contents of \gls{ELF} objects are described using \emph{segments}, and
+\emph{sections}. Segments contain information used at runtime for the
+execution of the code, and sections contain data about the code itself.
+Sections contain data used \emph{offline} (i.e. not at runtime). Sections have
+arbitrary names and contents. Debugging information is not strictly needed at
+runtime for the execution of the program: it is considered ancillary, and is
+stored in sections.
 
 As per the specification, the DWARF debugging information must be stored in
 the ELF objects in sections with the \verb|.debug_| prefix. Each one of those
@@ -151,7 +152,7 @@ sections stores a particular kind of information, as seen on
 
 \subsubsection{Types}
 
-A types is represented as a DIE with one of the following tags:
+A type is represented as a DIE with one of the following tags:
 
 \begin{itemize}
   \item \verb|DW_TAG_base_type|
@@ -165,7 +166,7 @@ A types is represented as a DIE with one of the following tags:
 \end{itemize}
 
 
-\minisec{Base Types (\autoref{fig:die-base-type})}
+\minisec{Base Types}
 
 \begin{figure}
   \centering
@@ -202,13 +203,14 @@ A types is represented as a DIE with one of the following tags:
 \end{figure}
 
 
-Base types are represented by DIEs with a \verb|DW_TAG_base_type| tag. This
-covers all the C/C++ numeric types: signed and unsigned integers, floating
-point types (\mintinline{c}{float}, \mintinline{c}{double}), the
-\mintinline{c}{char} type, and the new integer-based types of C99
-(\mintinline{c}{_Bool}, \mintinline{c}{int32_t}, etc.)
+Base types(\autoref{fig:die-base-type}) are represented by DIEs with
+a \verb|DW_TAG_base_type| tag. This covers all the C/C++ numeric types: signed
+and unsigned integers, floating point types (\mintinline{c}{float},
+\mintinline{c}{double}), the \mintinline{c}{char} type, and the new
+integer-based types of C99 (\mintinline{c}{_Bool}, \mintinline{c}{int32_t},
+etc.)
 
-The size of the values in is given using a \verb|DW_AT_byte_size| attribute,
+The size of the values is given using a \verb|DW_AT_byte_size| attribute,
 in bytes. Sizes are the same reported by the C \mintinline{c}{sizeof}
 operator. A \verb|DW_AT_encoding| attribute specifies how the values are
 used in the program. For example, \verb|DW_ATE_boolean|
@@ -242,7 +244,7 @@ The rest of C/C++ base types are defined as aliases of these
 using \mintinline{c}{typedef}.
 
 
-\minisec{Pointer Types (\autoref{fig:die-pointer-type})}
+\minisec{Pointer Types}
 
 \begin{figure}
   \centering
@@ -272,14 +274,14 @@ using \mintinline{c}{typedef}.
   \label{fig:die-pointer-type}
 \end{figure}
 
-Pointer types are represented by DIEs with a \verb|DW_TAG_pointer_type| tag,
-and a lone \verb|DW_AT_type| attribute points to the DIE of the pointed-to type.
-This allows to represent pointers of to any type. Multiple levels of
-indirection are represented by chains of \verb|DW_TAG_pointer_type| DIEs.
-The example in \autoref{fig:die-pointer-type} exemplifies this situation, in
-what could be the representation of the \mintinline{c}{int**} when the
-rightmost “Type DIE” contains the information for the \mintinline{c}{int}
-type.
+Pointer types (\autoref{fig:die-pointer-type}) are represented by DIEs with
+a \verb|DW_TAG_pointer_type| tag, and a lone \verb|DW_AT_type| attribute
+points to the DIE of the pointed-to type. This allows to represent pointers
+of/to any type. Multiple levels of indirection are represented by chains of
+\verb|DW_TAG_pointer_type| DIEs. The example in \autoref{fig:die-pointer-type}
+exemplifies this situation, in what could be the representation of the
+\mintinline{c}{int**} when the rightmost “Type DIE” contains the information
+for the \mintinline{c}{int} type.
 
 
 \minisec{Constant Types}
@@ -290,7 +292,7 @@ a \verb|DW_AT_type| attribute with reference pointing to a type DIE.
 This way, the pointed type is marked as immutable.
 
 
-\minisec{Array Types (\autoref{fig:array-type-die})}
+\minisec{Array Types}
 
 \begin{figure}
   \centering
@@ -333,18 +335,19 @@ This way, the pointed type is marked as immutable.
 \end{figure}
 
 
-Array types are represented by a DIE with a \verb|DW_TAG_array_type| tag.
-A \verb|DW_AT_type| attribute contains a reference to the type of the elements
-of the array. The space reserved for attribute values can be insufficient to
-store the number of elements in the array, so instead a chain of related DIEs
-is referenced using a \verb|DW_AT_sibling| attribute, and one of the elements
-in the chain is \verb|DW_TAG_subrange_type| DIE. The latter specifies the
-\emph{size} —using a \verb|DW_AT_byte_size| attribute— of the type needed to
-store the \emph{count} of items, and the location of the value itself using
+Array types (\autoref{fig:array-type-die}) are represented by a DIE with
+a \verb|DW_TAG_array_type| tag. A \verb|DW_AT_type| attribute contains
+a reference to the type of the elements of the array. The space reserved for
+attribute values can be insufficient to store the number of elements in the
+array, so instead a chain of related DIEs is referenced using
+a \verb|DW_AT_sibling| attribute, and one of the elements in the chain is
+\verb|DW_TAG_subrange_type| DIE. The latter specifies the \emph{size} —using
+a \verb|DW_AT_byte_size| attribute— of the type needed to store the
+\emph{count} of items, and the location of the value itself using
 a \verb|DW_AT_count| attribute.
 
 
-\minisec{Type Aliases (\autoref{fig:typedef-die})}
+\minisec{Type Aliases}
 
 As a convenience, programming languages usually allow defining new user-defined
 names for types. This is particularly handy to avoid repeating complex type
@@ -356,7 +359,7 @@ the \mintinline{c}{typedef} keyword:
 typedef int (*compare_function_t) (const void* a, const void*b);
 \end{minted}
 
-A type alias is represented by a DIE with tag
+A type alias (\autoref{fig:typedef-die}) is represented by a DIE with tag
 \verb|DW_TAG_typedef|\footnote{The name of the tag hints that
 the DWARF format was designed with the C language in mind.} tag. The aliased
 type is referenced using a \verb|DW_AT_type| attribute, and
@@ -386,7 +389,7 @@ a \verb|DW_AT_name| attribute provides the \emph{name} of the aliased type.
 \end{figure}
 
 
-\minisec{Structured Types (\autoref{fig:struct-type-die})}
+\minisec{Structured Types}
 
 \begin{figure}
   \centering
@@ -459,10 +462,11 @@ C records are defined using the \mintinline{c}{struct} keyword:
   };
 \end{minted}
 
-\noindent A record type is described using a set of related DIEs. At the top
-level, a DIE with tag \verb|DW_TAG_structure_type| provides the size of the
-record type in bytes, by means of a \verb|DW_AT_byte_size| attribute, and the
-name of the record type using a \verb|DW_AT_name| attribute.
+\noindent A record type (\autoref{fig:struct-type-die}) is described using
+a set of related DIEs. At the top level, a DIE with tag
+\verb|DW_TAG_structure_type| provides the size of the record type in bytes, by
+means of a \verb|DW_AT_byte_size| attribute, and the name of the record type
+using a \verb|DW_AT_name| attribute.
 
 In order to describe the members, a DIE with tag \verb|DW_TAG_member| is
 used for each of them. These DIEs contain a \verb|DW_AT_type| attribute
@@ -495,28 +499,29 @@ In this case, an additional DIE with tag \verb|DW_TAG_structure_type| is
 present, \emph{without} specifying the size of the data type with
 a \verb|DW_AT_byte_size| attribute. Instead, a \verb|DW_AT_declaration|
 attribute is added, flagging the type as declared, but not neccessarily
-defined. Optionally, if the complete definition of the is known by the
-compiler, it might adds \verb|DW_AT_specification| attribute pointing to the
-top level DIE which describes the type in full.
+defined. Optionally, if the complete definition is known by the compiler, it
+might add \verb|DW_AT_specification| attribute pointing to the top level DIE
+which describes the type in full.
 
 
 \minisec{Union Types}
 
 Union types use the same structure of DIEs as record types, with a couple of
 small differeces: the tag for the top-level DIE is \verb|DW_TAG_union_type|,
-and the \verb|DW_AT_byte_size| attribute indicates the size of the
+and a \verb|DW_AT_byte_size| attribute which indicates the size of the
 \emph{largest member type}.
 
 
-\minisec{Enumeration Types (\autoref{fig:enum-type-die})}
+\minisec{Enumeration Types}
 
-The representation of enumeration shares some similarities with the
-representation of record and enumeration types: a top level DIE with tag
-\verb|DW_TAG_enumeration_type| describes the size of the integral type needed
-for values of the enumerated type using a \verb|DW_AT_byte_size| attribute,
-and a \verb|DW_AT_name| attribute contains the name of the type.
+The representation of enumerations (\autoref{fig:enum-type-die}) shares
+a number of similarities with the representation of record and enumeration
+types: a top level DIE, in this case with tag \verb|DW_TAG_enumeration_type|,
+describes the size of the integral type needed for values of the enumerated
+type using a \verb|DW_AT_byte_size| attribute, and a \verb|DW_AT_name|
+attribute contains the name of the type.
 
-The set of values are described by a DIE each, with tag
+The set of values is described by a DIE each, with tag
 \verb|DW_TAG_enumerator|. Enumerators contain a \verb|DW_AT_name| attribute
 with the name of the enumerator, and its associated value in
 a \verb|DW_AT_constvalue| attribute.
@@ -577,7 +582,7 @@ a \verb|DW_AT_constvalue| attribute.
 
 The representation functions using DIEs uses the same structure as record
 and enumeration types: the top level entry contains general information about
-the function itself, using attributes, plus a link to a chains of DIEs.
+the function itself, using attributes, plus a link to a chain of DIEs.
 Function entries come in different flavors, depending on their tag:
 
 \begin{itemize}
@@ -587,14 +592,13 @@ Function entries come in different flavors, depending on their tag:
     program. For example, this can be used by a \gls{pascal} compiler to
     represent the code inside the \mintinline{pascal}{program} block.
   \item \verb|DW_TAG_inlined_subroutine| \hfill \\
-    Describes a function whose code has
+    Describes a function for which the code has
     been copied by the compiler inside another part of the program (i.e.
     \emph{inlined}) as a performance optimization.
   \item \verb|DW_TAG_subroutine| \hfill \\
     Describes normal functions. In \gls{object-oriented} languages is also
-    used to describe methods, with the type the method applies to linked
-    as type DIE of the first parameter. 
-\end{itemize}
+    used to describe methods, with the type the method applies to linked as
+type DIE of the first parameter. \end{itemize}
 
 The basic structure is shared among the three types, with the following
 attributes in the top level DIE:
@@ -694,10 +698,22 @@ consecutive. Each parameter entry contains the following attributes:
 
 \subsection{Naming}
 
-\begin{figure}
+In the Lua community there is a certain tradition of naming projects after
+celestial bodies, or terms related to them. After all, Lua means \emph{moon}
+in Portuguese.
+
+\begin{figure}[H]
   \centering
   \includegraphics[width=0.5\textwidth]{img/eris-orbit}
+  \caption{Orbit of the 136199 Eris dwarf planet}
+  \label{fig:eris-orbit}
 \end{figure}
+
+Following this tradition, it seemed fitting to choose the name of the
+dwarf planet Eris. Dwarf planets are neither planets not natural satellites,
+but something in between. The name \Eris* beautifully encompasses the name of
+the \gls{DWARF} debugging information format, and the fact that it is an
+entity that is almost a moon
 
 
 \tikzstyle{component} = [
