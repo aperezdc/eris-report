@@ -6,14 +6,14 @@
 
 Most programming languages provide some mechanism to use libraries —sometimes
 called \emph{modules}— implemented in some other language. Most of the time,
-this other language belongs family of the C language, which can be compiled
-into \emph{native object code}. The reasons are twofold: it allows to reuse
-functionality provided by the system that otherwise would not be available,
-and in the other hand it opens the door to implementing performance--critical
-pieces of a system using native code.
+this other language belongs to the family of the C language, which can be
+compiled into \emph{native object code}. The reasons are twofold: on one hand
+it allows to reuse functionality provided by the system that otherwise would
+not be available, and in the other hand it opens the door to implementing
+performance--critical pieces of a system using native code.
 
-Despite the advantages, using native code from a dynamic programming language
-requires creating a layer of software often called \emph{bridge}, or
+Despite the advantages, using native code from a different host programming
+language requires creating a layer of software often called \emph{bridge}, or
 \emph{binding} from now on, which wraps the native library to provide an
 interface compatible with the run-time environment of the dynamic programming
 language. Those bindings, created either manually or with the help of code
@@ -48,28 +48,34 @@ C at runtime. To achieve this, it will use the debugging information generated
 by the C compiler. Additionally:
 
 \begin{itemize}
-	\item Modifications to the Lua virtual machine, or its core libraries are
-		to be avoided, if possible. The less the changes, the lower the
-		maintenance cost of the system when Lua is updated. An implementation
-		which does not modify Lua itself would be usable with Lua packages
-		provided by the operating system, thus easing the setup process.
-	\item The implementation will load \gls{ELF} shared objects
-		into the Lua virtual machine, and use the debugging information in
-		\gls{DWARF} format present in them.
-	\item Values of C types, including user defined ones, will be readable
-		and modifiable from Lua. It will also be possible to create new
-		values of C types from Lua.
+
+	\item Modifications to the Lua virtual machine, or its core libraries are to
+	be avoided, if possible. The fewer the changes, the lower the maintenance
+	cost of the system when Lua is updated. An implementation which does not
+	modify Lua itself would be usable with Lua packages provided by the
+	operating system, thus easing the setup process.
+
+	\item The implementation will load \gls{ELF} shared objects into the Lua
+	virtual machine, and use the debugging information in \gls{DWARF} format
+	present in them.
+
+	\item Values of C types, including user defined ones, will be readable and
+	modifiable from Lua. It will also be possible to create new values of
+	C types from Lua.
+
 	\item Invocation of functions from loaded shared objects will be supported
-		for functions of arbitrary return types, and any number of
-		parameters of any supported type. Lua values passed to functions
-		will be automatically converted to C types whenever possible. Values
-		of C types created from Lua will also be accepted as valid function
-		parameters.
-	\item The implementation will target the GNU/Linux operating system
-		running on the x86\_64 architecture.
-	\item The design of the system will be extensible, allowing to add
-		support for more shared object formats, debugging information formats,
-		operating systems, and architectures.
+	for functions of arbitrary return types, and any number of parameters of any
+	supported type. Lua values passed to functions will be automatically
+	converted to C types whenever possible. Values of C types created from Lua
+	will also be accepted as valid function parameters.
+
+	\item The implementation will target the GNU/Linux operating system running
+	on the x86\_64 architecture.
+
+	\item The design of the system will be extensible, allowing to add support
+	for more shared object formats, debugging information formats, operating
+	systems, and architectures.
+
 \end{itemize}
 
 
@@ -80,39 +86,42 @@ identified:
 
 \begin{enumerate}
 	\item Initial study, including:
-		\begin{itemize}
+		\begin{enumerate}
 			\item Understanding how different kinds of data are stored in \gls{ELF}
 				object files.
 			\item Identifying the parts of the \gls{DWARF} specification which apply
 				to the scope of the project.
 			\item Investigating existing tools which share similar goals.
-		\end{itemize}
+		\end{enumerate}
 
 	\item Analysis, including:
-		\begin{itemize}
+		\begin{enumerate}
 			\item Understanding the relevant parts of the \gls{DWARF}
 				debugging information format.
 			\item Getting acquainted with Lua and the implementation
 				of its \gls{VM}.
-		\end{itemize}
+		\end{enumerate}
 
-	\item Designing the automatic binding system.
+	\item Development, including:
+		\begin{enumerate}
+			\item Designing the automatic binding system.
+			\item Implementing the automatic binding mechanism.
+			\item Testing the system, including:
+				\begin{itemize}
+					\item Designing a set of unit and regressions tests.
+					\item Implementing unit and regression tests.
+				\end{itemize}
+		\end{enumerate}
 
-	\item Implementing the automatic binding mechanism.
+	\item Validation, including:
+		\begin{enumerate}
+			\item Developing example Lua programs which demonstrate the
+				capabilities of the system.
+			\item Rewriting at least one previously existing program to
+				validate usage of the system in a real--world scenario.
+		\end{enumerate}
 
-	\item Testing and validating the system, including:
-		\begin{itemize}
-			% \item Investigating existing unit testing frameworks with Lua support and
-			% 	determine whether they are usable in the context of this project.
-			\item Designing a set of unit and regressions tests.
-			\item Implementing unit and regression tests.
-		\end{itemize}
-
-	\item Developing example Lua programs which demonstrate the capabilities of
-		the system, and rewriting at least one previously existing program to
-		validate usage of the system in a real--world scenario.
-
-	\item Writing of the final report.
+	\item Documentation, including writing of the final report.
 	% \item Determine whether to use an existing JIT code generator or to
 	% 	implement our own.
 	% \item Design the JIT code generator.
@@ -130,15 +139,13 @@ the completion, using an effort of eight hours per person, per day (8h/p/d).
 		\toprule
 		\# & Task & Estimation (days) \\
 		\midrule
-		1. & Initial study     &  5 \\
+		1. & Initial study     & 10 \\
 		2. & Analysis          & 15 \\
-		3. & Design            &  4 \\
-		4. & Implementation    & 30 \\
-		5. & Testing           & 10 \\
-		6. & Example programs  &  2 \\
-		7. & Final report      & 15 \\
+		3. & Development       & 50 \\
+		4. & Validation        & 10 \\
+		5. & Documentation     & 30 \\
 		\midrule
-		   & \emph{Total}      & 84 \\
+		   & \emph{Total}      & 115 \\
 		\bottomrule
 	\end{tabular}
 	\caption{Effort estimation}
@@ -150,7 +157,7 @@ from agile development methodologies are used. Namely:
 
 \begin{itemize}
 	\item From Scrum, the concepts of \emph{iteration} and \emph{sprints}, with
-    their respective planning and review seasons. Daily stand-up meeting are
+    their respective planning and review seasons. Daily stand-up meetings are
     not used, and there is no \emph{scrum master}: none of those would make
     make sense provided that there is only one person in the team.
   \item The \emph{Kanban} methodology is used in order to keep an always
