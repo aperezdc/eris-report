@@ -219,8 +219,71 @@ Microsoft's .NET environment.
 \subsection{Lua C API}
 	\label{sec:lua-c-api}
 
-% Plain API
-% API wrappers
+The Lua \gls{VM} exposes a C \gls{API} which, among other things, allows to
+register C functions to be called by Lua code. These communicate with the VM
+using a well-defined protocol (see listing \ref{lst:lua-c-api-example}
+for an example).
+
+\begin{listing}[ht]
+	\begin{ccode}
+  int sum_and_average (lua_State *L) {
+    lua_Number result = 0.0;
+    int nargs = lua_gettop (L); /* number or arguments */
+    for (int i = 1; i <= n; i++) {
+      if (!lua_isnumber (L, i)) {
+        lua_pushliteral (L, "argument is not a number");
+        lua_error (L);
+      }
+      result += lua_tonumber (L, i);
+    }
+    lua_pushnumber (L, result);        /* first result */
+    lua_pushnumber (L, result / n);   /* second result */
+    return 2;                     /* number of results */
+  }
+	\end{ccode}
+	\caption{C function callable from Lua}
+	\label{lst:lua-c-api-example}
+\end{listing}
+
+Despite Lua providing a register-based VM, the C API uses a \emph{virtual
+stack} to exchange values with C code. When a C function is called, it gets
+a new stack, initially containing the arguments passed to the function, and
+it must adhere to the following protocol:
+
+\begin{itemize}
+	\item C functions must be declared as returning an \Mc|int|, and accept
+		a single \Mc|lua_State*| parameter. This is, their function pointer
+		type is compatible with \Mc|lua_CFunction|, which Lua defines as:
+		\begin{ccode}
+			typedef int (*lua_Cfunction) (lua_State*);
+		\end{ccode}
+
+	\item The C function receives arguments from Lua in its call stack in
+		direct order (the first argument is pushed first by the VM). The size of
+		the stack —at this point the number of arguments— can be queried using
+		\Mc|lua_gettop()|, and values can be obtained using the \verb|lua_to*()|
+		functions.
+
+	\item To return values back to Lua, the C function pushes them onto the
+		stack in direct order (the first result is pushed first) using the
+		\verb|lua_push*()| functions.
+
+	\item The C function passes control to the VM returning the number of
+		results available at the top of the stack. Any values left in the
+		stack below the results are discarded.
+
+\end{itemize}
+
+The C API provided by Lua is comprehensive, but using it tends to produce
+verbose programs, with varying amounts of repeated code. Lua itself
+acknowledges this issue by officially including an \emph{auxiliar library}
+as part of the package, which provides a collection of utility functions
+implemented using the base API. Third-party wrappers over the official API
+exist, which can either provide a more convenient interface to Lua, or allow
+languages other than C to use Lua (more than 20 at the time of writing,
+including support for many popular languages like C++, Objective-C, Go,
+Java, or Fortran).
+
 
 \subsection{Binding Generators}
 
