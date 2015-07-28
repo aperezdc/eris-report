@@ -23,7 +23,7 @@ languages are also dynamically typed, and are frequently called “scripting
 languages”.
 
 Popular contemporary scripting languages include Perl, Python, PHP, the
-ubiquitiuos JavaScript, and of course Lua (described in
+ubiquitous JavaScript, and of course Lua (described in
 \autoref{sec:lua-programming-lang}). Many of their features were first
 implemented as native features of the Lisp programming language, which itself
 is dynamic.
@@ -42,7 +42,7 @@ to increase widespread adoption.
 
 A \gls{VM} is an \gls{emulation} of a particular computer system based on its
 architecture. \emph{System virtual machines} provide a complete substitute for
-the real machine, and re targeted towards the execution of complete operating
+the real machine, and targeted towards the execution of complete operating
 systems and software stacks. On the other hand, \emph{process virtual
 machines} execute a single computer program by providing an execution
 environment suitable for a particular programming language, which can be
@@ -135,7 +135,7 @@ widespread usage in the video games industry (e.g. World Of Warcraft).
   \label{lst:lua-example-tables}
 \end{listing}
 
-The main programming paradigm is imperative, but the language supports
+Lua's main programming paradigm is imperative, but the language supports
 functions as \glspl{first-class-value} and \glspl{closure}, making it possible
 to easily write programs in a functional programming style. Like in
 \gls{pascal}, English words (\Mlua|function|, \Mlua|then|, \Mlua|end|) are
@@ -145,7 +145,7 @@ the \emph{table}, which is the basis for all user--defined types. Tables can
 be used as arrays (listing \ref{lst:lua-example-memoize}), structures, and
 objects (listing \ref{lst:lua-example-tables}).
 
-An unique and powerful feature of Lua is its support for \emph{metatables}:
+A unique and powerful feature of Lua is its support for \emph{metatables}:
 values may have an associated table (the so-called \emph{metatable}) which
 allows to extend the semantics of language constructs, allowing to define how
 tables behave when arithmetic and relational operators are applied to tables,
@@ -155,7 +155,7 @@ seemingly--infinite array which contains the $n^{th}$ \gls{fibonacci-number}
 at index $n$. A common use for metatables is enabling support for
 object--oriented programming, using them to define object inheritance chains
 (listing \ref{lst:lua-example-meta-oo}) --- as Lua itself does not have the
-notion of classes, prototypes are used instead, in the Self or JavaScript
+notion of classes, prototypes are used instead, as in the Self or JavaScript
 languages.
 
 \begin{listing}
