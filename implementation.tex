@@ -6,7 +6,7 @@
 
 \todo[inline]{Move this to an appendinx with manual / installation notes}.
 
-Instead of providing its own implementation for certain functionality, \Eris*
+Instead of providing its own implementation for certain functionality, \Eol*
 uses existing, proved software components.
 
 \begin{table}[h]
@@ -23,10 +23,10 @@ uses existing, proved software components.
 		\bottomrule
 	\end{tabular}
 	\caption{Dependencies}
-	\label{tab:eris-dependencies}
+	\label{tab:eol-dependencies}
 \end{table}
 
-\autoref{tab:eris-dependencies} shows the dependencies expected to be
+\autoref{tab:eol-dependencies} shows the dependencies expected to be
 installed in the system. The items marked (\inlinesymbol\Tick) as
 \emph{bundled} are not included in the source repository, but the build system
 includes support for downloading tarballs with the source code and doing
@@ -66,13 +66,13 @@ most likely not built as \gls{PIC}, which is a requirement.
 
 \section{Project Source Structure}
 
-The \Eris* source code
+The \Eol* source code
 
 \begin{figure}[h]
     \centering
     \noindent\begin{minipage}{0.75\textwidth}
 \dirtree{%
-.1 \DtFolder{eris/}.
+.1 \DtFolder{lua-eol/}.
 .2   \DtFolder{doc/} \DTcomment{Documentation and API reference}.
 .2   \DtFolder{examples/}.
 .3     *.lua \DTcomment{Module usage examples}.
@@ -82,8 +82,8 @@ The \Eris* source code
 .2   \DtFolder{test/}.
 .3     *.lua \DTcomment{Unit tests}.
 .2   uthash.h \DTcomment{Copy of UT-hash}.
-.2   eris-*.c \DTcomment{Module sources}.
-.2   eris-*.h \DTcomment{Module sources}.
+.2   eol-*.c \DTcomment{Module sources}.
+.2   eol-*.h \DTcomment{Module sources}.
 }
     \end{minipage}
     \caption{Source tree structure.}
@@ -94,7 +94,7 @@ The \Eris* source code
 \section{Type Representation}
 
 Converting values from C to Lua, and vice versa, is one of the most important
-tasks performed by \Eris*: C values need to be made accessible from Lua.
+tasks performed by \Eol*: C values need to be made accessible from Lua.
 Therefore, this information needs to be read from the DWARF debugging
 information (see \nameref{sec:debuginfo-structure}), and kept around in
 a suitable data structure. This structure must be:
@@ -109,19 +109,19 @@ a fixed amount of them, and the characteristics (size, name, etc) are well
 known. The challenging part is representing user defined types (\Mc|struct|,
 \Mc|enum|, \Mc|union|), and derived types (pointers, arrays).
 
-The data structure for describing types is \verb|ErisTypeInfo| (listing
-\vref{lst:ErisTypeInfo}). It is a tagged \Mc|struct|, with the tag
-indicatingthe type kind (\verb|ERIS_TYPE_S32| for 32-bit signed integers,
-\verb|ERIS_TYPE_STRUCT| for a \Mc|struct|, etc; the complete list of values
-can be seen in listing \vref{lst:ErisType}). The contained data will vary
+The data structure for describing types is \verb|EolTypeInfo| (listing
+\vref{lst:EolTypeInfo}). It is a tagged \Mc|struct|, with the tag
+indicatingthe type kind (\verb|EOL_TYPE_S32| for 32-bit signed integers,
+\verb|EOL_TYPE_STRUCT| for a \Mc|struct|, etc; the complete list of values
+can be seen in listing \vref{lst:EolType}). The contained data will vary
 depending on the value of the \emph{kind} tag. The members for all possible
 values are grouped in an \mintinline{c}{union} in order to make them share the
 same memory space.
 
 \begin{listing}[H]
   \begin{ccode}
-    struct _ErisTypeInfo {
-      ErisType type;
+    struct _EolTypeInfo {
+      EolType type;
       union {
         struct TI_base     ti_base;
         struct TI_pointer  ti_pointer;
@@ -131,39 +131,39 @@ same memory space.
         struct TI_compound ti_compound;
       };
     };
-    typedef struct _ErisTypeInfo ErisTypeInfo;
+    typedef struct _EolTypeInfo EolTypeInfo;
   \end{ccode}
-  \caption{\texttt{ErisTypeInfo}.}
-  \label{lst:ErisTypeInfo}
+  \caption{\texttt{EolTypeInfo}.}
+  \label{lst:EolTypeInfo}
 \end{listing}
 
 \begin{listing}[f]
   \centering
   \begin{ccode}
     typedef enum {
-      ERIS_TYPE_VOID,    /* void        */
-      ERIS_TYPE_BOOL,    /* _Bool       */
-      ERIS_TYPE_S8,      /* int8_t      */
-      ERIS_TYPE_U8,      /* uint8_t     */
-      ERIS_TYPE_S16,     /* int16_t     */
-      ERIS_TYPE_U16,     /* uint16_t    */
-      ERIS_TYPE_S32,     /* int32_t     */
-      ERIS_TYPE_U32,     /* uint32_t    */
-      ERIS_TYPE_S64,     /* int64_t     */
-      ERIS_TYPE_U64,     /* uint64_t    */
-      ERIS_TYPE_FLOAT,   /* float       */
-      ERIS_TYPE_DOUBLE,  /* double      */
-      ERIS_TYPE_TYPEDEF, /* typedef … T */
-      ERIS_TYPE_CONST,   /* const T     */
-      ERIS_TYPE_POINTER, /* T*          */
-      ERIS_TYPE_ARRAY,   /* T …[n]      */
-      ERIS_TYPE_STRUCT,  /* struct …    */
-      ERIS_TYPE_UNION,   /* union …     */
-      ERIS_TYPE_ENUM,    /* enum …      */
-    } ErisType;
+      EOL_TYPE_VOID,    /* void        */
+      EOL_TYPE_BOOL,    /* _Bool       */
+      EOL_TYPE_S8,      /* int8_t      */
+      EOL_TYPE_U8,      /* uint8_t     */
+      EOL_TYPE_S16,     /* int16_t     */
+      EOL_TYPE_U16,     /* uint16_t    */
+      EOL_TYPE_S32,     /* int32_t     */
+      EOL_TYPE_U32,     /* uint32_t    */
+      EOL_TYPE_S64,     /* int64_t     */
+      EOL_TYPE_U64,     /* uint64_t    */
+      EOL_TYPE_FLOAT,   /* float       */
+      EOL_TYPE_DOUBLE,  /* double      */
+      EOL_TYPE_TYPEDEF, /* typedef … T */
+      EOL_TYPE_CONST,   /* const T     */
+      EOL_TYPE_POINTER, /* T*          */
+      EOL_TYPE_ARRAY,   /* T …[n]      */
+      EOL_TYPE_STRUCT,  /* struct …    */
+      EOL_TYPE_UNION,   /* union …     */
+      EOL_TYPE_ENUM,    /* enum …      */
+    } EolType;
   \end{ccode}
-  \caption{\texttt{ErisType} enumeration.}
-  \label{lst:ErisType}
+  \caption{\texttt{EolType} enumeration.}
+  \label{lst:EolType}
 \end{listing}
 
 
@@ -171,34 +171,34 @@ same memory space.
   \centering
   \begin{tabular}{lll}
     \toprule
-    C Construct     & DWARF DIE                    & \Eris* Type            \\
+    C Construct     & DWARF DIE                    & \Eol* Type            \\
     \midrule
-    \Mc|void|       & ø                            & \Mc|ERIS_TYPE_VOID|    \\
-    \Mc|bool|       & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_BOOL|    \\
-    \Mc|int8_t|     & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S8|      \\
-    \Mc|uint8_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U8|      \\
-    \Mc|int16_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S16|     \\
-    \Mc|uint16_t|   & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U16|     \\
-    \Mc|int32_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S32|     \\
-    \Mc|uint32_t|   & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U32|     \\
-    \Mc|int64_t|    & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_S64|     \\
-    \Mc|uint64_t|   & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_U64|     \\
-    \Mc|float|      & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_FLOAT|   \\
-    \Mc|double|     & \verb|DW_TAG_base_type|      & \Mc|ERIS_TYPE_DOUBLE|  \\
-    \Mc|typedef|... & \verb|DW_TAG_typedef|        & \Mc|ERIS_TYPE_TYPEDEF| \\
-    \Mc|const|...   & \verb|DW_TAG_const_type|     & \Mc|ERIS_TYPE_CONST|   \\
-    ...\Mc|*|       & \verb|DW_TAG_pointer_type|   & \Mc|ERIS_TYPE_POINTER| \\
-    ...\Mc|[n]|     & \verb|DW_TAG_array_type|     & \Mc|ERIS_TYPE_ARRAY|   \\
-    \Mc|struct|...  & \verb|DW_TAG_structure_type| & \Mc|ERIS_TYPE_STRUCT|  \\
-    \Mc|union|...   & \verb|DW_TAG_union_type|     & \Mc|ERIS_TYPE_UNION|   \\
-    \Mc|enum|...    & \verb|DW_TAG_enumration_type|& \Mc|ERIS_TYPE_ENUM|    \\
+    \Mc|void|       & ø                            & \Mc|EOL_TYPE_VOID|    \\
+    \Mc|bool|       & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_BOOL|    \\
+    \Mc|int8_t|     & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_S8|      \\
+    \Mc|uint8_t|    & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_U8|      \\
+    \Mc|int16_t|    & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_S16|     \\
+    \Mc|uint16_t|   & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_U16|     \\
+    \Mc|int32_t|    & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_S32|     \\
+    \Mc|uint32_t|   & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_U32|     \\
+    \Mc|int64_t|    & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_S64|     \\
+    \Mc|uint64_t|   & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_U64|     \\
+    \Mc|float|      & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_FLOAT|   \\
+    \Mc|double|     & \verb|DW_TAG_base_type|      & \Mc|EOL_TYPE_DOUBLE|  \\
+    \Mc|typedef|... & \verb|DW_TAG_typedef|        & \Mc|EOL_TYPE_TYPEDEF| \\
+    \Mc|const|...   & \verb|DW_TAG_const_type|     & \Mc|EOL_TYPE_CONST|   \\
+    ...\Mc|*|       & \verb|DW_TAG_pointer_type|   & \Mc|EOL_TYPE_POINTER| \\
+    ...\Mc|[n]|     & \verb|DW_TAG_array_type|     & \Mc|EOL_TYPE_ARRAY|   \\
+    \Mc|struct|...  & \verb|DW_TAG_structure_type| & \Mc|EOL_TYPE_STRUCT|  \\
+    \Mc|union|...   & \verb|DW_TAG_union_type|     & \Mc|EOL_TYPE_UNION|   \\
+    \Mc|enum|...    & \verb|DW_TAG_enumration_type|& \Mc|EOL_TYPE_ENUM|    \\
     \bottomrule
   \end{tabular}
-  \caption{Mapping of C types, DWARF DIEs and \Mc|ErisType|.}
+  \caption{Mapping of C types, DWARF DIEs and \Mc|EolType|.}
 \end{table}
 
 \noindent
-The following sections describe in detail the members of \verb|ErisTypeInfo|.
+The following sections describe in detail the members of \verb|EolTypeInfo|.
 
 
 \subsection{Base Type Representation}
@@ -214,16 +214,16 @@ The following sections describe in detail the members of \verb|ErisTypeInfo|.
 Even though it is sufficient to provide type kind codes for all the base types
 as discussed before, providing the possibility of querying their \verb|name|
 and \verb|size| is a convenient feature, at a very small cost: the
-\verb|ErisTypeInfo| value for each one of the base types is a singleton,
+\verb|EolTypeInfo| value for each one of the base types is a singleton,
 defined as follows:
 
 \begin{ccode*}{samepage=true}
-  /* File: eris-typing.h */
-  extern const ErisTypeInfo* eris_typeinfo_u32;
+  /* File: eol-typing.h */
+  extern const EolTypeInfo* eol_typeinfo_u32;
 
-  /* File: eris-typing.c */
-  const ErisTypeInfo* eris_typeinfo_u32 = &((ErisTypeInfo) {
-    .kind         = ERIS_TYPE_U32,
+  /* File: eol-typing.c */
+  const EolTypeInfo* eol_typeinfo_u32 = &((EolTypeInfo) {
+    .kind         = EOL_TYPE_U32,
     .ti_base.name = "uint32_t",
     .ti_base.size = sizeof (uint32_t),
   });
@@ -239,12 +239,12 @@ the C preprocessor and a couple generator macros are used (see
 
 \begin{ccode*}{samepage=true}
   struct TI_pointer {
-    const ErisTypeInfo *typeinfo;
+    const EolTypeInfo *typeinfo;
   };
 \end{ccode*}
 
 \noindent
-Pointers are represented by referencing the \verb|ErisTypeInfo| of the
+Pointers are represented by referencing the \verb|EolTypeInfo| of the
 pointed-to type. Thus, it is the only member in \Mc|struct TI_pointer|. The
 size of a pointer value is platform dependant, but well known and constant for
 each platform, and is the value of the C expression \Mc|sizeof(void*)|.
@@ -254,13 +254,13 @@ each platform, and is the value of the C expression \Mc|sizeof(void*)|.
 
 \begin{ccode*}{samepage=true}
   struct TI_array {
-    const ErisTypeInfo *typeinfo;
-    uint64_t            n_items;
+    const EolTypeInfo *typeinfo;
+    uint64_t           n_items;
   };
 \end{ccode*}
 
 \noindent
-Arrays are represented by referencing the \verb|ErisTypeInfo| of the array
+Arrays are represented by referencing the \verb|EolTypeInfo| of the array
 items, plus the number of items (\verb|n_items|) present in the array. The
 size of an array value can be calculated multiplying the size of the item type
 by the number of items in the array.
@@ -270,10 +270,10 @@ by the number of items in the array.
 
 \begin{ccode*}{samepage=true}
   struct TI_compound {
-    char              *name;
-    uint32_t           size;
-    uint32_t           n_members;
-    ErisTypeInfoMember members[];
+    char             *name;
+    uint32_t          size;
+    uint32_t          n_members;
+    EolTypeInfoMember members[];
   };
 \end{ccode*}
 
@@ -287,26 +287,26 @@ by the number of items in the array.
   \item [\Mc|size|] \hfill \\
     Contains the size of the type, in bytes.
   \item [\Mc|n_members| / \Mc|members|] \hfill \\
-    Count of members (or enumerators, for \verb|ERIS_TYPE_ENUM|) in the type,
+    Count of members (or enumerators, for \verb|EOL_TYPE_ENUM|) in the type,
     and an array contaning their descriptions. Using
     a \gls{flexible-array-member}, allows usage of a single chunk of memory
-    for the \verb|ErisTypeInfo| itself and the items in the array.
+    for the \verb|EolTypeInfo| itself and the items in the array.
 \end{description}
 
 \noindent
-The auxiliar \verb|ErisTypeInfoMember| type is defined as follows:
+The auxiliar \verb|EolTypeInfoMember| type is defined as follows:
 
 \begin{ccode*}{samepage=true}
   typedef struct {
-    const char             *name;
+    const char            *name;
     union {
-      int64_t               value; /* enum */
-      struct {                     /* union, struct */
-        uint32_t            offset;
-        const ErisTypeInfo *typeinfo;
+      int64_t              value; /* enum */
+      struct {                    /* union, struct */
+        uint32_t           offset;
+        const EolTypeInfo *typeinfo;
       };
     };
-  } ErisTypeInfoMember;
+  } EolTypeInfoMember;
 \end{ccode*}
 
 \noindent
@@ -314,12 +314,12 @@ This always contains the (optional) \Mc|name| of the types, and usage of the
 remaining fields varies with the type being described:
 
 \begin{itemize}
-  \item For \Mc|ERIS_TYPE_STRUCT|, the \Mc|offset| of the member (in bytes,
+  \item For \Mc|EOL_TYPE_STRUCT|, the \Mc|offset| of the member (in bytes,
     from the beginning of the record) and a pointer to its type information
     (\Mc|typeinfo|) are used.
-  \item For \Mc|ERIS_TYPE_UNION|, the \Mc|offset| is ignored, and only the
+  \item For \Mc|EOL_TYPE_UNION|, the \Mc|offset| is ignored, and only the
     type information of the member (\Mc|typeinfo|) is used.
-  \item For \Mc|ERIS_TYPE_ENUM|, only the \Mc|value| associated with the
+  \item For \Mc|EOL_TYPE_ENUM|, only the \Mc|value| associated with the
     enumerator is used.
 \end{itemize}
 
@@ -331,27 +331,27 @@ An \Mc|union| is used to make fields share the same memory space.
 
 \begin{ccode*}{samepage=true}
   struct TI_typedef {
-    char               *name;
-    const ErisTypeInfo *typeinfo;
+    char              *name;
+    const EolTypeInfo *typeinfo;
   };
 \end{ccode*}
 
 Type aliases assign a name to an arbitrary type. They are represented by the
-\Mc|name| and a pointer to the \Mc|ErisTypeInfo| of the type.
+\Mc|name| and a pointer to the \Mc|EolTypeInfo| of the type.
 
 
 \subsection{Read-only Type Representation}
 
 \begin{ccode*}{samepage=true}
   struct TI_const {
-    const ErisTypeInfo *typeinfo;
+    const EolTypeInfo *typeinfo;
   };
 \end{ccode*}
 
 \noindent
 Flagging a type as read-only (i.e. using the \Mc|const| type qualifier in C)
 is represented in the same way as pointers (\autoref{sec:pointer-typeinfo}):
-by keeping a pointer to the \Mc|ErisTypeInfo| that is read-only.
+by keeping a pointer to the \Mc|EolTypeInfo| that is read-only.
 
 
 \section{Memory owners and life-cycle}
@@ -368,7 +368,7 @@ struct point {
 In Lua, we could create an instance like this:
 
 \begin{luacode}
-local Geometry = eris.wrap("libgeometry.so")
+local Geometry = eol.wrap("libgeometry.so")
 -- Creates heavy userdata, the Lua GC handles freeing memory
 local point = Geometry.point { x = 1, y = -1 }
 \end{luacode}
@@ -379,13 +379,13 @@ local point = Geometry.point { x = 1, y = -1 }
 \section{Miscellanea}
 
 This section describes assorted techniques used in the implementation of
-\Eris* which do not fall under a common umbrella, yet they deserve to be
+\Eol* which do not fall under a common umbrella, yet they deserve to be
 mentioned.
 
 \subsection{Preprocessor “Generator Macros”}
   \label{sec:cpp-abuse-genmacros}
 
-This is a programming pattern used thorough the code of \Eris*: the
+This is a programming pattern used thorough the code of \Eol*: the
 C preprocessor is used in a convoluted way as a rudimentary code generator
 using lists of related elements. First, a macro of related elements is defined
 (\emph{enumerator macro}, from now on), and it must accept the identifier for
@@ -394,21 +394,21 @@ enumerator macro is an expansion of the generator, passing the parameters
 needed by the generator.
 
 In order to better understand how generator macros work, let us walk through
-a complete example adapted from the \Eris* source code. The following macro
-expands into a function which checks the type of an \Mc|ErisTypeInfo| — it is
+a complete example adapted from the \Eol* source code. The following macro
+expands into a function which checks the type of an \Mc|EolTypeInfo| — it is
 the \emph{generator}:
 
 \begin{ccode*}{samepage=true}
 #define MAKE_TYPEINFO_IS_TYPE(suffix, name, ctype)            \
-    bool eris_typeinfo_is_ ## name (const ErisTypeInfo *înfo) \
-    { return info->type == ERIS_TYPE_ ## suffix; }
+    bool eol_typeinfo_is_ ## name (const EolTypeInfo *înfo) \
+    { return info->type == EOL_TYPE_ ## suffix; }
 \end{ccode*}
 
 \noindent In generator macros like this, the concatenation operator
 (\verb|##|) of the preprocessor is used extensively to build pieces of valid
 C code. The example shows how the \verb|name| parameter is concatenated to
 create the name of the generated function, and the \verb|suffix| parameter is
-concatenated to create a valid \verb|ErisType| (listing \vref{lst:ErisType})
+concatenated to create a valid \verb|EolType| (listing \vref{lst:EolType})
 value. A valid expansion of the above macro is:
 
 \begin{ccode*}{samepage=true}
@@ -419,8 +419,8 @@ MAKE_TYPEINFO_IS_TYPE (S32, s32, int32_t)
 which generates the following valid C function:
 
 \begin{ccode*}{samepage=true}
-  bool eris_typeinfo_is_s32 (const ErisTypeInfo *info)
-  { return info->type == ERIS_TYPE_S32; }
+  bool eol_typeinfo_is_s32 (const EolTypeInfo *info)
+  { return info->type == EOL_TYPE_S32; }
 \end{ccode*}
 
 \noindent The \emph{enumerator macro} is made by grouping a set of macro
@@ -450,9 +450,9 @@ statements are generated. This is done in the following example:
 
 \begin{ccode*}{samepage=true}
 #define MAKE_SIGNED_TYPE_CASE(suffix, name, ctype) \
-    case ERIS_TYPE_ ## suffix: return true;
+    case EOL_TYPE_ ## suffix: return true;
 
-bool eris_type_is_signed (ErisType type) {
+bool eol_type_is_signed (EolType type) {
   switch (type) {
     INTEGER_S_TYPES (MAKE_SIGNED_TYPE_CASE)
     default: return false;
