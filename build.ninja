@@ -10,11 +10,9 @@ rule svg2pdf
   description = SVG->PDF ${in}
   command = inkscape -z -C -T -A ${out} ${in}
 
-build img/eris-orbit.pdf : svg2pdf img/eris-orbit.svg
 build img/lua-logo.pdf   : svg2pdf img/lua-logo.svg
 
 build eris-report.pdf : texpdf $
-img/eris-orbit.pdf             $
 img/lua-logo.pdf               $
 contextualization.tex          $
 implementation.tex             $
