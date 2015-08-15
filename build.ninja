@@ -12,18 +12,18 @@ rule svg2pdf
 
 build img/lua-logo.pdf   : svg2pdf img/lua-logo.svg
 
-build eris-report.pdf : texpdf $
-img/lua-logo.pdf               $
-contextualization.tex          $
-implementation.tex             $
-bibliography.tex               $
-introduction.tex               $
-conclusions.tex                $
-design.tex                     $
-hyphenation.tex                $
-glossary.tex                   $
-summary.tex                    $
-eris-report.tex
-  tex_main = eris-report
+build lua-eol-report.pdf : texpdf $
+img/lua-logo.pdf                  $
+contextualization.tex             $
+implementation.tex                $
+bibliography.tex                  $
+introduction.tex                  $
+conclusions.tex                   $
+design.tex                        $
+hyphenation.tex                   $
+glossary.tex                      $
+summary.tex                       $
+lua-eol-report.tex
+  tex_main = lua-eol-report
 
-default eris-report.pdf
+default lua-eol-report.pdf
