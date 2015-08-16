@@ -377,17 +377,17 @@ parser.
 In its most generic meaning, a \gls{FFI} is any mechanism which allows
 a program written in a programming language to call code or use services
 written in another. In the Lua community, a FFI refers specifically to such
-a mechanism which works at run time. That is: it \emph{does not} require using
+a mechanism which works at run time. That is, it \emph{does not} require using
 the Lua C API (\autoref{sec:lua-c-api}), it is not a binding generator used at
-build time (\autoref{sec:binding-generators}), nor it is a wrapper over the
+build time (\autoref{sec:binding-generators}), nor is it a wrapper over the
 Lua C API.
 
 The canonical example of a FFI is the \gls{LuaJIT} FFI
 module\footnote{\url{http://luajit.org/ext_ffi.html}}. Its functionality is
 available  as a regular Lua module which includes a number of support
-functions, including the ability to parse C-style declarations. Under the hood
-the module generates the machine code for wrapper functions —of type
-\Mc|lua_CFunction| (see \autoref{sec:lua-c-api})— using the LuaJIT code
+functions, including the ability to parse C-style declarations. Under the
+hood, the module generates the machine code for wrapper functions —of type
+\Mc|lua_CFunction| (c.f. \autoref{sec:lua-c-api})— using the LuaJIT code
 generator, which are directly callable (example in listing
 \autoref{lst:luajit-ffi-example}). A standalone
 \verb|luaffi|\footnote{\url{https://github.com/jmckaskill/luaffi}} module for
