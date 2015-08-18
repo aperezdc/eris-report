@@ -382,13 +382,26 @@ the Lua C API (\autoref{sec:lua-c-api}), it is not a binding generator used at
 build time (\autoref{sec:binding-generators}), nor is it a wrapper over the
 Lua C API.
 
-The canonical example of a FFI is the \gls{LuaJIT} FFI
+FFIs can be separated in two categories, depending on how they obtain the type
+information (functions names, arguments, return values; and the data types of
+all the values involved):
+
+\begin{itemize}
+
+	\item FFIs which require the programmer to supply type information.
+
+	\item FFIs which obtain type information in an automated fashion.
+
+\end{itemize}
+
+The canonical example of a FFI which requires the programmer to enter type
+information is the \gls{LuaJIT} FFI
 module\footnote{\url{http://luajit.org/ext_ffi.html}}. Its functionality is
-available  as a regular Lua module which includes a number of support
-functions, including the ability to parse C-style declarations. Under the
-hood, the module generates the machine code for wrapper functions —of type
-\Mc|lua_CFunction| (c.f. \autoref{sec:lua-c-api})— using the LuaJIT code
-generator, which are directly callable (example in listing
+available as a regular Lua module which includes a number of support
+functions, including the ability to parse C-style declarations to obtain type
+information. Under the hood, the module generates the machine code for wrapper
+functions —of type \Mc|lua_CFunction| (c.f. \autoref{sec:lua-c-api})— using
+the LuaJIT code generator, which are directly callable (example in listing
 \autoref{lst:luajit-ffi-example}). A standalone
 \verb|luaffi|\footnote{\url{https://github.com/jmckaskill/luaffi}} module for
 the standard Lua \gls{VM} exists, which has the same interface as the LuaJIT
@@ -404,13 +417,37 @@ FFI module, and even reuses its code generator.
 	\label{lst:luajit-ffi-example}
 \end{listing}
 
+Where the LuaJIT FFI requires the programmer to enter C-style declarations of
+functions, LGI\footnote{\url{https://github.com/pavouk/lgi/}} uses the type
+information supplied by the GObject-Introspection to provide access to
+most of the libraries included as part of the
+GNOME\footnote{\url{http://gnome.org}} desktop environment. The type
+information supplied by GObject-Introspection is extracted from the source
+code of the GNOME destop components at compile-time, and stored on disk in its
+own file format. The included \verb|libgirepository| library is then used by
+LGI to allow enumerate the available modules and their contents, as well as
+allowing calling functions transparently from Lus. The metadata recorded by
+GObject-Introspection when scanning source code includes additional
+information in specially formatted comments, which allows LGI to create
+idiomatic object oriented interfaces (c.f.
+listing~\autoref{lst:lua-lgi-example}).
 
-\todo[inline]{Mention: GObject-Introspection}
-% Examples:
-%
-% GObject-Introspection
-% LuaJIT FFI
-% Standalone FFI module
+\begin{listing}
+	\begin{luacode}
+	local lgi = require("lgi")
+	local Gtk = lgi.Gtk
+
+	local w = Gtk.Window {
+		title = "LGI Example",
+		child = Gtk.Button { label = "Close",
+			                   on_clicked = Gtk.main_quit },
+	}
+	w:show_all()
+	Gtk.main()
+	\end{luacode}
+	\caption{Using the GTK+ user interface toolkit via GObject-Introspection}
+	\label{lst:lua-lgi-example}
+\end{listing}
 
 \section{Executable Formats}
 
