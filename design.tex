@@ -215,30 +215,34 @@ in bytes. Sizes are the same reported by the C \mintinline{c}{sizeof}
 operator. A \verb|DW_AT_encoding| attribute specifies how the values are
 used in the program. For example, \verb|DW_ATE_boolean|
 corresponds with the \Mc|bool| type (or \Mc|_Bool|) in the
-source program. The following table summarizes how C types are represented by
-a base type DIE for the x86\_64 architecture (sizes may vary in other
-architectures):
+source program. \autoref{tab:dwarf-base-types-mapping} summarizes how C
+types are represented by a base type DIE for the x86\_64 architecture
+(sizes may vary in other architectures).
 
-\begin{center}
-  \begin{tabular}{lcl}
-    \toprule
-    C Type & \verb|DW_AT_byte_size| & \verb|DW_AT_encoding| \\
-    \midrule
-    \mintinline{c}{bool}               & 1 & \verb|DW_ATE_boolean| \\
-    \mintinline{c}{char}               & 1 & \verb|DW_ATE_signed_char| \\
-    \mintinline{c}{unsigned char}      & 1 & \verb|DW_ATE_unsigned_char| \\
-    \mintinline{c}{short int}          & 2 & \verb|DW_ATE_signed| \\
-    \mintinline{c}{unsigned short int} & 2 & \verb|DW_ATE_unsigned1| \\
-    \mintinline{c}{int}                & 4 & \verb|DW_ATE_signed| \\
-    \mintinline{c}{unsigned int}       & 4 & \verb|DW_ATE_unsigned| \\
-    \mintinline{c}{long int}           & 8 & \verb|DW_ATE_signed| \\
-    \mintinline{c}{unsigned long int}  & 8 & \verb|DW_ATE_unsigned| \\
-    \mintinline{c}{float}              & 4 & \verb|DW_ATE_float| \\
-    \mintinline{c}{double}             & 8 & \verb|DW_ATE_float| \\
-    \mintinline{c}{long double}        & 16& \verb|DW_ATE_float| \\
-    \bottomrule
-  \end{tabular}
-\end{center}
+\begin{table}[ht]
+	\begin{center}
+		\begin{tabular}{lcl}
+			\toprule
+			C Type & \verb|DW_AT_byte_size| & \verb|DW_AT_encoding| \\
+			\midrule
+			\mintinline{c}{bool}               & 1 & \verb|DW_ATE_boolean| \\
+			\mintinline{c}{char}               & 1 & \verb|DW_ATE_signed_char| \\
+			\mintinline{c}{unsigned char}      & 1 & \verb|DW_ATE_unsigned_char| \\
+			\mintinline{c}{short int}          & 2 & \verb|DW_ATE_signed| \\
+			\mintinline{c}{unsigned short int} & 2 & \verb|DW_ATE_unsigned1| \\
+			\mintinline{c}{int}                & 4 & \verb|DW_ATE_signed| \\
+			\mintinline{c}{unsigned int}       & 4 & \verb|DW_ATE_unsigned| \\
+			\mintinline{c}{long int}           & 8 & \verb|DW_ATE_signed| \\
+			\mintinline{c}{unsigned long int}  & 8 & \verb|DW_ATE_unsigned| \\
+			\mintinline{c}{float}              & 4 & \verb|DW_ATE_float| \\
+			\mintinline{c}{double}             & 8 & \verb|DW_ATE_float| \\
+			\mintinline{c}{long double}        & 16& \verb|DW_ATE_float| \\
+			\bottomrule
+		\end{tabular}
+	\end{center}
+	\caption{DWARF representation of C base types for the x86\_64 architecture}
+	\label{tab:dwarf-base-types-mapping}
+\end{table}
 
 The rest of C/C++ base types are defined as aliases of these
 using \mintinline{c}{typedef}.
