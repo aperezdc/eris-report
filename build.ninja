@@ -23,6 +23,7 @@ design.tex                        $
 hyphenation.tex                   $
 glossary.tex                      $
 summary.tex                       $
+appendix-installation.tex         $
 lua-eol-report.tex
   tex_main = lua-eol-report
 

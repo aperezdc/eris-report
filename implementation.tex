@@ -2,67 +2,6 @@
 
 \chapter{Implementation}
 
-\section{Prerequisites}
-
-\todo[inline]{Move this to an appendinx with manual / installation notes}.
-
-Instead of providing its own implementation for certain functionality, \Eol*
-uses existing, proved software components.
-
-\begin{table}[h]
-	\centering
-	\begin{tabular}{lrccc}
-		\toprule
-		Component & Version  & Required & Optional & Bundled \\
-		\midrule
-		Lua             & 5.3      & \Tick &       & \Tick \\
-		\verb|libdwarf| & 20150507 & \Tick &       & \Tick \\
-		\verb|libelf|   & 0.152    & \Tick &       & \\
-		\verb|readline| & 5.0      &       & \Tick & \\
-		\verb|libffi|   & 3.1      & \Tick &       & \\
-		\bottomrule
-	\end{tabular}
-	\caption{Dependencies}
-	\label{tab:eol-dependencies}
-\end{table}
-
-\autoref{tab:eol-dependencies} shows the dependencies expected to be
-installed in the system. The items marked (\inlinesymbol\Tick) as
-\emph{bundled} are not included in the source repository, but the build system
-includes support for downloading tarballs with the source code and doing
-a local build. When enabled, bundled dependencies will be automatically
-downloaded, built, and used instead instead of the versions provided by the
-system. In the case of using \verb|libdwarf| bundled, it will be statically
-linked. See~\autoref{sec:running-configure} for instructions for enabling
-bundled libraries. This is particularly useful for systems which do not
-provide Lua 5.3 packages (for example, the case Debian and Ubuntu at the time
-of writing).
-
-\begin{table}
-  \begin{tabular}{ccp{0.4\textwidth}}
-  \toprule
-	Distribution & Installation Command & Packages \\
-	\midrule
-	Debian, Ubuntu &
-    \verb|apt-get install| &
-    \verb|libdwarf-dev| \verb|ninja-build| \\
-	Arch Linux & \verb|pacman -S| & \verb|libdwarf| \verb|ninja| \verb|lua| \\
-	\bottomrule
-  \end{tabular}
-  \caption{Dependency packages in popular GNU/Linux distributions.}
-  \label{tab:distro-dependency-packages}
-\end{table}
-
-\autoref{tab:distro-dependency-packages} shows required packages as provided
-by popular GNU/Linux distributions. Some versions of Debian (and derivatives
-like Ubuntu) include only a static version of \verb|libdwarf| in the packages,
-most likely not built as \gls{PIC}, which is a requirement.
-
-
-\section{Build Tools}
-
-\subsection{Autoconfiguration}
-  \label{sec:running-configure}
 
 \section{Project Source Structure}
 

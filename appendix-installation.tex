@@ -1,0 +1,120 @@
+% vim: set ft=tex spelllang=en ts=2 sw=2 et
+
+\chapter{Installation}
+
+\section{Prerequisites}
+\label{sec:eol-prereqs}
+
+Instead of providing its own implementation for certain functionality, \Eol*
+uses existing, proved software components.
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{lrccc}
+		\toprule
+		Component & Version  & Required & Optional & Bundled \\
+		\midrule
+		Lua             & 5.3      & \Tick &       & \Tick \\
+		LuaBitOp        & 1.0.2    &       & \Tick & \Tick \\
+		\verb|libdwarf| & 20150507 & \Tick &       & \Tick \\
+		\verb|libelf|   & 0.152    & \Tick &       & \\
+		\verb|readline| & 5.0      &       & \Tick & \\
+		\verb|libffi|   & 3.1      &       & \Tick & \\
+		\bottomrule
+	\end{tabular}
+	\caption{Dependencies}
+	\label{tab:eol-dependencies}
+\end{table}
+
+\autoref{tab:eol-dependencies} shows the dependencies expected to be
+installed in the system. The items marked (\inlinesymbol\Tick) as
+\emph{bundled} are not included in the source repository, but the build system
+includes support for downloading tarballs with the source code and doing
+a local build. When enabled, bundled dependencies will be automatically
+downloaded, built, and used instead instead of the versions provided by the
+system. In the case of using \verb|libdwarf| bundled, it will be statically
+linked. See~\autoref{sec:running-configure} for instructions to enable
+bundled libraries. This is particularly useful for systems which do not
+provide Lua 5.3 packages (for example, the case Debian and Ubuntu at the time
+of writing).
+
+\begin{table}
+  \begin{tabular}{ccp{0.4\textwidth}}
+  \toprule
+	Distribution & Installation Command & Packages \\
+	\midrule
+	Debian, Ubuntu &
+    \verb|apt-get install| &
+    \verb|libdwarf-dev| \verb|ninja-build| \\
+	Arch Linux & \verb|pacman -S| & \verb|libdwarf| \verb|ninja| \verb|lua| \\
+	\bottomrule
+  \end{tabular}
+  \caption{Dependency packages in popular GNU/Linux distributions.}
+  \label{tab:distro-dependency-packages}
+\end{table}
+
+\autoref{tab:distro-dependency-packages} shows required packages as provided
+by popular GNU/Linux distributions. Some versions of Debian (and derivatives
+like Ubuntu) include only a static version of \verb|libdwarf| in the packages,
+most likely not built as \gls{PIC}, which is a requirement.
+
+
+\section{Building}
+
+The build process follows the convention pioneered by GNU Autotools, in which
+an autoconfiguration script (\verb|configure|) is run first to inspect the
+system, determine which optional components are to be enabled at build
+time, and generate the needed build files. In short, building \Eol* is done
+by executing the following commands from the top level source directory:
+
+\begin{minted}{sh}
+	./configure
+	make
+\end{minted}
+
+or, using Ninja:
+
+\begin{minted}{sh}
+	./configure
+	ninja
+\end{minted}
+
+
+\subsection{Autoconfiguration}
+  \label{sec:running-configure}
+
+The \verb|configure| script accepts a number of command line paramers, which
+determine how the systm is built. In most cases the script will figure out
+automatically whether the required prerequisites (\autoref{sec:eol-prereqs})
+are available, and whether the bundled versions should be used. In case the
+detection failed, the following are some of the command line options can be
+passed to \verb|configure|:
+
+\begin{description}
+
+	\item [\texttt{--enable-bundled-libdwarf}] \hfill\\
+		Uses the bundled \verb|libdwarf| instead of trying to use the one
+		provided by the system.
+
+	\item [\texttt{--enable-bundled-lua}] \hfill\\
+		Uses the bundled Lua distribution instead of trying to use the one
+		provided by the system.
+
+	\item [\texttt{--enable-ffi}] \hfill\\
+		Always use \verb|libffi| to perform function calls, and do not build
+		support their JIT compilation.
+
+	\item [\texttt{--jit-arch=ARCH}] \hfill\\
+		Skip detecting the operating system and processor, and use JIT
+		compilation for the supplied architecture (\verb|ARCH|). It is
+		possible to obtain a list of the supported architectures by running
+		\texttt{./configure --jit-arch=help}.
+
+\end{description}
+
+In order to obtain a complete list of all the command line options that the
+script accepts, use:
+
+\begin{minted}{sh}
+	./configure --help
+\end{minted}
