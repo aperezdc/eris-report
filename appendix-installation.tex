@@ -120,3 +120,16 @@ script accepts, use:
 \begin{minted}{sh}
 	./configure --help
 \end{minted}
+
+
+\section{Testing the Build}
+
+Once \Eol* is has been built, it is recommended to run the test suite to
+ensure that the binaries work as expected. The test suite is included in
+source tree, and it does not require any additional dependencies. In order
+to run the test suite, use the \verb|tools/run-tests| script from the
+top level firectory of the source tree:
+
+\begin{minted}{sh}
+	./tools/run-tests
+\end{minted}
