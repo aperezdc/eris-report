@@ -5,7 +5,8 @@
 
 \section{Project Source Structure}
 
-The \Eol* source code
+The \Eol* source code is organized in the following directory structure, which
+follows usual conventions for C projects:
 
 \begin{figure}[h]
     \centering
@@ -28,6 +29,38 @@ The \Eol* source code
     \caption{Source tree structure.}
 \end{figure}
 
+Module source files (\verb|eol-*.h|, \verb|eol-*.c|) are named after the
+components identified during the design phase. In particular:
+
+\begin{itemize}
+
+  \item \verb|eol-module.c| \hfill\\
+    Main part of the code, including the interfacing with Lua.
+
+  \item \verb|eol-fcall.h|,
+        \verb|eol-fcall-<name>.h|,
+        \verb|eol-fcall-<name>.c|... \hfill\\
+    Different implementations of the native function invocation mechanism.
+
+  \item \verb|eol-typing.h|, \verb|eol-typing.c| \hfill\\
+    Type representation module.
+
+  \item \verb|eol-typecache.h|, \verb|eol-typecache.c|, \verb|uthash.h| \hfill\\
+    Type representation cache module.
+
+  \item \verb|eol-libdwarf.h|, \verb|eol-libdwarf.c| \hfill\\
+    Utility functions to simplify working with \verb|libdwarf|.
+
+  \item \verb|eol-lua.h| \hfill\\
+    Utility functions to simplify working with the Lua C API.
+
+  \item \verb|eol-trace.h|, \verb|eol-trace.c| \hfill\\
+    Tracing support module.
+
+  \item \verb|eol-util.h|, \verb|eol-util.c| \hfill\\
+    Miscellaneous utility code, including support code for the runtime checks.
+
+\end{itemize}
 
 
 \section{Type Representation}
@@ -293,26 +326,178 @@ is represented in the same way as pointers (\autoref{sec:pointer-typeinfo}):
 by keeping a pointer to the \Mc|EolTypeInfo| that is read-only.
 
 
+
+
+\section{Type cache}
+
+The type cache is implemented as an opaque data structure which can only be
+used by means of its public API (Listing \autoref{lst:eol-typecache-api}). Internally
+it is implemented as a hash table which reuses uthash~\cite{uthash-guide}, and
+it maps integer keys (\Mc|uint32_t|) to elements \Mc|EolTypeInfo| structures.
+Cache keys can be any unique integer which uniquely identifies a particular
+type. For a \Mc|EolTypeInfo| created from its DWARF representation, the offset
+of the top-level \gls{DIE} is used as the key. This works because information
+for a particular type is never duplicated inside the same ELF file, so there
+is an unique offset in the file for it.
+
+\begin{listing}[ht]
+  \centering
+\begin{ccode}
+typedef struct _EolTypeCacheEntry* EolTypeCache;
+
+typedef bool (*EolTypeCacheIter)  (EolTypeCache*,
+                                   const EolTypeInfo*,
+                                   void *userdata);
+
+void eol_type_cache_init (EolTypeCache *cache);
+void eol_type_cache_free (EolTypeCache *cache);
+
+void eol_type_cache_add (EolTypeCache      *cache,
+                         uint32_t           offset,
+                         const EolTypeInfo *typeinfo);
+
+const EolTypeInfo* eol_type_cache_lookup (EolTypeCache *cache,
+                                          uint32_t      offset);
+
+void eol_type_cache_foreach (EolTypeCache    *cache,
+                             EolTypeCacheIter callback,
+                             void             *userdata);
+\end{ccode}
+  \caption{Public API of \Mc|EolTypeCache|}.
+  \label{lst:eol-typecache-api}
+\end{listing}
+
+The type cache only manages its own dynamically allocated memory, used for the
+nodes of the has table. The \Mc|EolTypeInfo| structures referenced by the
+cache are considered opaque by the cache, and the memory used by them is not
+ever freed by the cache: freeing the cache leaks memory if the cached entries
+are not freed by other means. In practice, this is not a problem because the
+type information is constructed as-needed, and cached during the whole
+lifetime of each loaded ELF object. This approach allows to simply iterate
+over the elements to free each one of them before unloading the object file.
+
+
+\section{\Eol* Lua module}
+
+The top-level API exposed to Lua is the \verb|eol| module, which has to be
+returned by the C function that the Lua VM calls after loading an extension
+module. This function is always called \verb|luaopen_<module>|, where
+\verb|<module>| is the name of the module being loaded:
+
+\begin{ccode}
+LUAMOD_API int
+luaopen_eol (lua_State *L)
+{
+  eol_trace_setup ();
+
+  (void) elf_version (EV_NONE);
+  if (elf_version (EV_CURRENT) == EV_NONE)
+    return luaL_error (L, "outdated libelf version");
+
+  luaL_newlib (L, eollib);
+  create_meta (L);
+  return 1;
+}
+\end{ccode}
+
+Notice how the function uses \verb|luaL_newlib()| insted of manually creating
+a table in the Lua stack a setting a field for each one of the \verb|eol.*|
+module level functions. The \verb|eollib| variable is defined as follows,
+using the supplied \verb|luaL_Reg| type:
+
+\begin{ccode}
+static const luaL_Reg eollib[] = {
+  { "load",     eol_load     },
+  { "type",     eol_type     },
+  { "sizeof",   eol_sizeof   },
+  { "typeof",   eol_typeof   },
+  { "offsetof", eol_offsetof },
+  { "cast",     eol_cast     },
+  { NULL, NULL },
+};
+\end{ccode}
+
+As a last step, \verb|create_meta| is called to register the metatables for
+the C types which \Eol* exposes to the Lua VM.
+
+
+\subsection{Library loading}
+
+  \verb|eol_load| \todo{Write}
+
+\subsection{Type Information Lookup}
+
+  \verb|eol_type| \todo{Write}
+
+\subsection{Querying Types}
+
+  \verb|eol_typeof|
+  \verb|eol_sizeof|
+  \verb|eol_offsetof|
+  \todo{Write}
+
+\subsection{Casting}
+
+  \verb|eol_cast|
+
+
 \section{Memory owners and life-cycle}
 
-Problem: functions that allocate memory
+Native code uses a different approaches for memory management compared to Lua:
+while Lua uses \gls{GC}, which handles freeing chunks of memory automatically,
+native code frees memory explicitly. Take for example a function which creates
+a new \Mc|struct| and returns it:
 
 \begin{ccode*}{samepage=true}
-struct point {
-	int x;
-	int y;
-};
+struct point { int x; int y; };
+
+struct point* point_new (int x, int y) {
+  struct point *p = malloc (sizeof (struct point));
+  p->x = x;
+  p->y = y;
+  return p;
+}
 \end{ccode*}
 
-In Lua, we could create an instance like this:
+Then, that code is built into an ELF shared object file (\verb|point.so|),
+which is loaded using \Eol*, and used normally:
 
 \begin{luacode}
-local Geometry = eol.wrap("libgeometry.so")
--- Creates heavy userdata, the Lua GC handles freeing memory
-local point = Geometry.point { x = 1, y = -1 }
+local Geometry = eol.load("point.so")
+local point = Geometry.point_new(1, -1)
+-- Use the point normally.
 \end{luacode}
 
-\todo[inline]{Complete this section}
+The Lua VM only knows the userdata that \Eol* has created to represent the
+returned value, but it is not aware of the memory that has been allocated to
+hold the \Mc|struct point| value. Once the value is not used anymore by the
+Lua program, the garbage collector reclaims the space used by the userdata,
+but \verb|free()| is not called to free the memory allocated by
+\verb|malloc()|. Lua just does not know about memory that it has not allocated
+itself. One solution is to manually call a function to free the memory from
+Lua:
+
+\begin{luacode}
+local libc = eol.load("libc.so")
+libc.free(point)
+point = nil  -- Make sure it won't be used
+\end{luacode}
+
+The main problem with this is that the automatic memory management done by the
+Lua VM is lost, and programmers are forced to write additional code to free
+memory regions. This puts a burden in the developer, which would rather be
+avoided.
+
+
+\subsection{Lua as a Custom Allocator}
+
+  Letting Lua manage the memory.
+  \todo{Write}
+
+\subsection{GC Metamethods}
+
+  Registering a \verb|__gc| metamethod.
+  \todo{Write}
 
 
 \section{Miscellanea}
