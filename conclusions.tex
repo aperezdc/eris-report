@@ -7,66 +7,35 @@
 
 \section{Achieved Goals}
 
-During the development of the project, the specification of the ELF and DWARF
-standards has been analyzed, and the relevant parts which are useful for
-implementing a \gls{FFI} have been identified. A comprehensive understanding
-of the specification was acquired thanks to the following documentation:
+We consider that the main goals set at the beginning of this project
+(\autoref{sec:project-goals}) have been fullfilled. In particular:
 
 \begin{itemize}
 
-	\item \emph{How Debugging Works}~\cite{howdebugworks}: Tutorial-style
-	series of articles which give a good overall overview of how debugging
-	information is embeeded into compiled object code.
+	\item Developing an automatic binding system for the Lua programming
+	language, allowing seamless usage of C libraries.
 
-	\item \emph{System V Application Binary Interface Edition
-	4.1}\cite{elfspec-sysv}: Contains the original (non normative)
-	  specification of the ELF object file format. Though newer, normative
-	  versions of the specification exist, this version explains the concepts
-	  needed to understand the DWARF debugging information in an more
-	  affordable way.
+	\item Using the DWARF debugging information contained in ELF shared object
+	files to pinpoint the details about function, and involved data types.
 
-	\item \emph{DWARF Debugging Information Format Version
-	4}~\cite{dwarfspecv4}: Normative specification of the DWARF debugging
-	  information format.
+	\item Converting data values transparently between Lua and C.
 
-\end{itemize}
+	\item Providing a reference implementation for GNU/Linux running on the
+	x86\_86 architecture.
 
-Existing FFI implementations for Lua have been analyze to understand how they
-work, which was a valuable knowledge to keep in mind while designing how \Eol*
-bridges native code to Lua. In particular, the LuaJIT \verb|ffi| module was
-taken as a prime example of a proven solution which is popular in the Lua
-community. The following documents were instrumental for the design of the
-developed solution:
-
-\begin{itemize}
-
-	\item \emph{FFI semantics}~\cite{lj-ffi-semantic}: Describes how the
-	module interacts both with Lua, and the compiled C code.
-
-	\item \emph{ffi.* API functions}~\cite{lj-ffi-api}: Describes the API
-	of the \verb|ffi| module.
+	\item Avoiding modifications of the internals of the Lua VM. The
+	implementation was achieved using exclusively the Lua C API.
 
 \end{itemize}
 
 The C programming language was used to develop \Eol*, a Lua module which
 implements a FFI for Lua using the DWARF debugging information to gain
 knowledge about the types and functions available in ELF shared object files.
-During the development, the following was achieved:
-
-\begin{itemize}
-
-	\item Laying out the source code in such a way that the method used to
-	invoke C functions from Lua can be selected at build-time. Two backends
-	were implemented: one using \verb|libffi|, and a second one using JIT
-	compilation to generate the needed glue code.
-
-	\item Learning how to use LuaJIT's DynASM to implement a small JIT code
-	generator for the x86\_64 platform.
-
-	\item Learning to program in assembler for the Intel x86 platform,
-	including the \gls{ABI} calling conventions.
-
-\end{itemize}
+Separating the code which deals with native function invocation allows
+selecting which method is used to invoke native functions from Lua at
+build-time. Two backends were implemented: one using \verb|libffi|, and
+a second one using JIT compilation (by means of DynASM) for the Intel x86\_64
+architecture to generate the needed glue code.
 
 Additionally, a test harness for Lua has been developed, due to the existing
 Lua unit testing frameworks aborting their execution in the event of a crash
@@ -109,7 +78,6 @@ numbers later if needed} lines of code (standard LOC, ignoring comments, see
 	\label{fig:eol-loc}
 \end{figure}
 
-
 Last but not least, the \Eol* FFI module has been tested thoroughly, in two
 ways:
 
@@ -126,25 +94,56 @@ ways:
 
 \end{itemize}
 
-All in all, it is considered that the goals set at the beginning of this
-project (\autoref{sec:project-goals}) have been fullfilled, namely:
+
+
+\section{Lessons Learned}
+
+During the development of the project, the specification of the ELF and DWARF
+standards has been analyzed, and the relevant parts which are useful for
+implementing a \gls{FFI} have been identified. A comprehensive understanding
+of the specification was acquired thanks to the following documentation:
 
 \begin{itemize}
 
-	\item Develop and automatic binding system for the Lua programming
-	language allowing seamless usage of C libraries.
+	\item \emph{How Debugging Works}~\cite{howdebugworks}: Tutorial-style
+	series of articles which give a good overall overview of how debugging
+	information is embeeded into compiled object code.
 
-	\item Using the DWARF debugging information contained in ELF shared object
-	files to pinpoint the details about function, and involved data types.
+	\item \emph{System V Application Binary Interface Edition
+	4.1}\cite{elfspec-sysv}: Contains the original (non normative)
+	  specification of the ELF object file format. Though newer, normative
+	  versions of the specification exist, this version explains the concepts
+	  needed to understand the DWARF debugging information in an more
+	  approachable way.
 
-	\item Converting data values transparently between Lua and C.
-
-	\item Providing a reference implementation for GNU/Linux running on the
-	x86\_86 architecture.
+	\item \emph{DWARF Debugging Information Format Version
+	4}~\cite{dwarfspecv4}: Normative specification of the DWARF debugging
+	  information format.
 
 \end{itemize}
 
-\todo{Maybe something else here?}
+Existing FFI implementations for Lua have been analyzed to understand how they
+work, which was a valuable knowledge to keep in mind while designing how \Eol*
+bridges native code to Lua. In particular, the LuaJIT \verb|ffi| module was
+taken as a prime example of a proven solution which is popular in the Lua
+community. The following documents were instrumental for the design of the
+developed solution:
+
+\begin{itemize}
+
+	\item \emph{FFI semantics}~\cite{lj-ffi-semantic}: Describes how the
+	module interacts both with Lua, and the compiled C code.
+
+	\item \emph{ffi.* API functions}~\cite{lj-ffi-api}: Describes the API
+	of the \verb|ffi| module.
+
+\end{itemize}
+
+Implementing the JIT code generation required learning how to use LuaJIT's
+DynASM, which lacks official documentation. It was also needed to learn to
+program in assembler for the Intel x86 platform, and its \gls{ABI} calling
+conventions during the development of the JIT code generator.
+
 
 \section{Future Directions}
 
@@ -153,10 +152,38 @@ Every software project has room for improvement and continued refinement, and
 knowingly left out of the present project, in order to keep its scope under
 control. It is the intention of the author to keep developing \Eol* as a Free
 Software project, and there are a number of ideas for future development which
-have surfaced during the realization of its current incarnation.
+have surfaced during the realization of its current version.
+
+The following are ideas which are complex to realize, and even though working
+on them would require a big development effort, they open the path to exciting
+new possibilities:
+
+\begin{itemize}
+
+	\item Defining an on-disk format for type and function information. The
+	idea would be to obtain the information from the DWARF debugging
+	information, and store it in a format which is optimized for faster
+	reading. The files in this new format would be used for on-disk caching.
+
+	\item Using the file format implemented from the previous bullet point,
+	allow reading type information directly from it, without requiring that
+	the ELF shared objects include DWARF debugging information.
+
+	\item The generated code, when \Eol* is built with JIT code generation
+	enabled, could be saved to disk when it is known that it would not change
+	between different executions of the Lua VM. The generated code could be
+	saved in ELF object files, in order to load them reusing the Lua module
+	loader.
+
+	\item Implement reading debugging information in formats other than DWARF.
+	Ideally, there would be an interface that a “type information provider”
+	component could implement, and the DWARF provider would be just one of
+	many.
+
+\end{itemize}
 
 The following fall into the category of improvements which can be done with
-a moderate effort:
+a moderate effort, and would certainly provide added value to the project:
 
 \begin{itemize}
 
@@ -171,41 +198,16 @@ a moderate effort:
 	versions more widely deployed\todo{See if it's possible to add
 	a citation}.
 
-	\item Make \Eol* useable with LuaJIT.
+	\item \Eol* usable with LuaJIT. Most modules using the Lua 	C API can be
+	built for LuaJIT as well. LuaJIT is designed to be compatible with Lua
+	5.1, while the current Implementation targets version 5.3.
+
+	\item Implementing JIT compilation of function invocations for
+	architectures other than x86, and x86\_64. This can be done with ease for
+	the other architectures supported by DynASM: ARM, MIPS, and PowerPC.
 
 \end{itemize}
 
-The following are improvements which, while technically complex, would not
-need a big amount of time invested:
-
-\begin{itemize}
-
-	\item Implement JIT compilation of function invocations for architectures
-	other than x86, and x86\_64. This can be done with ease for the other
-	architectures supported by DynASM: ARM, MIPS, and PowerPC.
-
-\end{itemize}
-
-The following are ideas which are more complex to realize, and would require
-a big development effort:
-
-\begin{itemize}
-
-	\item Define an on-disk format for type and function information. The idea
-	would be to obtain the information from the DWARF debugging information,
-	and store it in a format which is optimized for faster reading. The files
-	in this new format would be used for caching the information.
-
-	\item Using the file format implemented from the previous bullet point,
-	allow reading type information directly from it, without requiring that
-	the ELF shared objects include DWARF debugging information.
-
-	\item Implement reading debugging information in formats other than DWARF.
-	Ideally, there would be an interface that a “type information provider”
-	component could implement, and thw DWARF provider would be just one of
-	many.
-
-\end{itemize}
 
 \section{Post-Mortem Analysis}
 
