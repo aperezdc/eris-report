@@ -88,7 +88,7 @@ The \verb|configure| script accepts a number of command line parameters, which
 determine how the system is built. In most cases the script will figure out
 automatically whether the required prerequisites (\autoref{sec:eol-prereqs})
 are available, and whether the bundled versions should be used. Passing
-parameters to the script is useful in case the detection failed, or to force
+parameters to the script is useful in case the detection fails, or to force
 certain build options.  The following are the parameters most commonly used
 with the \verb|configure| script:
 
@@ -125,7 +125,7 @@ script accepts, use:
 \section{Testing the Build}
 
 Once \Eol* is has been built, it is recommended to run the test suite to
-ensure that the binaries work as expected. The test suite is included in
+ensure that the binaries work as expected. The test suite is included in the
 source tree, and it does not require any additional dependencies. In order
 to run the test suite, use the \verb|tools/run-tests| script from the
 top level firectory of the source tree:

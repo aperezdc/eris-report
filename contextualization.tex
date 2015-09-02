@@ -730,7 +730,7 @@ source code. The entries are contained in the \verb|.debug_info| and
 DIE attributes can contain references to other DIEs, as shown in
 \autoref{fig:die-attr-references}, making it possible to create arbitrary
 links between nodes of the tree. Those explicit links are used extensively to
-group related entries together (for example the entries with tag
+group related entries together (for example entries with tag
 \verb|DW_TAG_formal_parameter|, which describe the parameters of a function,
 are chained using \verb|DW_AT_sibling| attributes), and to perform
 \gls{data-deduplication} of the debug information (for example, instead of
