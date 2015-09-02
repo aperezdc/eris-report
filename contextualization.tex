@@ -205,14 +205,7 @@ has since evolved into a general purpose programming language. It has been
 used in proffessional applications (e.g. Adobe Lightroom) and it has seen
 widespread usage in the video games industry (e.g. World Of Warcraft).
 
-% \begin{figure}[h]
-% 	\centering
-% 	\includegraphics[width=0.25\textwidth]{img/lua-logo}
-% 	\caption{The Lua logo. “Lua” means “moon” in Portuguese.}
-% 	\label{fig:lua-logo}
-% \end{figure}
-
-\begin{listing}
+\begin{listing}[H]
   \begin{luacode}
     -- Create a table, with one key, "age" and 7 as value
     animal = { age = 7 }
@@ -266,7 +259,7 @@ object--oriented programming, using them to define object inheritance chains
 notion of classes, prototypes are used instead, as in the Self or JavaScript
 languages.
 
-\begin{listing}
+\begin{listing}[H]
   \begin{luacode}
     fib = { 1, 1 }
     setmetatable(fib, {
@@ -282,7 +275,7 @@ languages.
 	\label{lst:lua-example-memoize}
 \end{listing}
 
-\begin{listing}
+\begin{listing}[H]
   \begin{luacode}
     -- Base object describing an unnamed living creature
     animal = {
@@ -332,7 +325,7 @@ register C functions to be called by Lua code. These communicate with the VM
 using a well-defined protocol (see listing \ref{lst:lua-c-api-example}
 for an example).
 
-\begin{listing}[ht]
+\begin{listing}[H]
 	\begin{ccode}
   int sum_and_average (lua_State *L) {
     lua_Number result = 0.0;
@@ -466,7 +459,7 @@ the LuaJIT code generator, which are directly callable (example in listing
 the standard Lua \gls{VM} exists, which has the same interface as the LuaJIT
 FFI module, and even reuses its code generator.
 
-\begin{listing}
+\begin{listing}[H]
 	\begin{luacode}
   local ffi = require("ffi")
   ffi.cdef("int printf(const char *fmt, ...);")
@@ -491,7 +484,7 @@ additional information in specially formatted comments, which allows LGI to
 create idiomatic object oriented interfaces (c.f.
 listing~\autoref{lst:lua-lgi-example}).
 
-\begin{listing}
+\begin{listing}[H]
 	\begin{luacode}
 	local lgi = require("lgi")
 	local Gtk = lgi.Gtk
