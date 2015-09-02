@@ -333,12 +333,12 @@ by keeping a pointer to the \Mc|EolTypeInfo| that is read-only.
 The type cache is implemented as an opaque data structure which can only be
 used by means of its public API (Listing \autoref{lst:eol-typecache-api}). Internally
 it is implemented as a hash table which reuses uthash~\cite{uthash-guide}, and
-it maps integer keys (\Mc|uint32_t|) to elements \Mc|EolTypeInfo| structures.
-Cache keys can be any unique integer which uniquely identifies a particular
-type. For a \Mc|EolTypeInfo| created from its DWARF representation, the offset
-of the top-level \gls{DIE} is used as the key. This works because information
-for a particular type is never duplicated inside the same ELF file, so there
-is an unique offset in the file for it.
+it maps integer keys (\Mc|uint32_t|) to \Mc|EolTypeInfo| structures. Cache
+keys can be any unique integer which uniquely identifies a particular type.
+For a \Mc|EolTypeInfo| created from its DWARF representation, the offset of
+the top-level \gls{DIE} is used as the key. This works because information for
+a particular type is never duplicated inside the same ELF file, so there is an
+unique offset in the file for it.
 
 \begin{listing}[ht]
   \centering
@@ -368,7 +368,7 @@ void eol_type_cache_foreach (EolTypeCache    *cache,
 \end{listing}
 
 The type cache only manages its own dynamically allocated memory, used for the
-nodes of the has table. The \Mc|EolTypeInfo| structures referenced by the
+nodes of the hash table. The \Mc|EolTypeInfo| structures referenced by the
 cache are considered opaque by the cache, and the memory used by them is not
 ever freed by the cache: freeing the cache leaks memory if the cached entries
 are not freed by other means. In practice, this is not a problem because the
@@ -400,8 +400,8 @@ luaopen_eol (lua_State *L)
 }
 \end{ccode}
 
-Notice how the function uses \verb|luaL_newlib()| insted of manually creating
-a table in the Lua stack a setting a field for each one of the \verb|eol.*|
+Notice how the function uses \verb|luaL_newlib()| instead of manually creating
+a table in the Lua stack, and setting a field for each one of the \verb|eol.*|
 module level functions. The \verb|eollib| variable is defined as follows,
 using the supplied \verb|luaL_Reg| type:
 
@@ -417,9 +417,11 @@ static const luaL_Reg eollib[] = {
 };
 \end{ccode}
 
-As a last step, \verb|create_meta| is called to register the metatables for
-the C types which \Eol* exposes to the Lua VM.
+As a last step, \verb|create_meta()| is called to register the metatables for
+the C types which \Eol* exposes to the Lua VM (\vref{sec:eol-mod-typemeta}).
 
+\subsection{Type Metatables}
+  \label{sec:eol-mod-typemeta}
 
 \subsection{Library loading}
 
@@ -441,9 +443,9 @@ the C types which \Eol* exposes to the Lua VM.
   \verb|eol_cast|
 
 
-\section{Memory owners and life-cycle}
+\section{Memory Ownership and Life Cycle}
 
-Native code uses a different approaches for memory management compared to Lua:
+Native code uses a different approach for memory management compared to Lua:
 while Lua uses \gls{GC}, which handles freeing chunks of memory automatically,
 native code frees memory explicitly. Take for example a function which creates
 a new \Mc|struct| and returns it:

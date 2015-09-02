@@ -577,23 +577,18 @@ its successor Haiku).
 	\label{fig:elf-structure}
 \end{figure}
 
-The actual data is categorized in \emph{segments}, and \emph{sections}:
-
-\begin{itemize}
-
-	\item Segments contain information used at runtime for the execution of the
-	code, and sections contain data about the code itself.
-
-	\item Sections contain data used \emph{offline} (i.e. not at runtime),
-	typically information needed linking and relocation of the contained program
-	code. They can have arbitrary names and contents.
-
-\end{itemize}
+Consequently, with the aforementioned parts of an ELF file, the actual data is
+categorized in \emph{segments}, and \emph{sections}. Segments contain
+information used at runtime for the execution of the code, and sections
+contain data about the code itself. Section names and contents are arbitrary,
+and they are used to store information used \emph{offline} (i.e. not at
+runtime) needed for relocating and linking the program code contained in the
+ELF file.
 
 Entries for both program and section header tables contain the sizes of the
 segments and sections they describe, and their offsets inside the ELF file. It
 is allowed by the specification to define more than one segment and section
-entries which refer to the same portion of the file, and also that there is
+entries which refer to the same portion of the file, and also that there are
 portions of the file which do not belong to any segment or section.
 
 
@@ -752,10 +747,10 @@ then referenced from other entries).
 
 \label{sec:debuginfo-structure}
 
-The following sections provide a simplified overview of the tree structure
-formed by the debug information entries of a program, in a level of detail
-which is enough for the goals of this project. For complete, detailed
-information, we refer to the DWARFv4 Specification~\cite{dwarfspecv4}.
+We now provide a simplified overview of the tree structure formed by the debug
+information entries of a program, in a level of detail which is enough for the
+goals of this project. For complete, detailed information, we refer to the
+DWARFv4 Specification~\cite{dwarfspecv4}.
 
 
 \subsubsection{Types}
