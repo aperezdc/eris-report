@@ -493,13 +493,103 @@ avoided.
 
 \subsection{Lua as a Custom Allocator}
 
-  Letting Lua manage the memory.
-  \todo{Write}
+The Lua VM exposes in its C API the ability to create \emph{userdata} objects.
+For the VM, userdata is seen as an opaque value which, by default, cannot be
+manipulated from Lua; for the client code using the Lua API, an userdata value
+is a region of memory allocated by the Lua VM, which can contain any data.
+Like every other value managed by the VM, userdata is subject to \gls{GC},
+which means that userdata values which are no longer referenced by a Lua
+program are garbage collected. This effectively allows C programmers to reuse
+the Lua GC for their data.
 
-\subsection{GC Metamethods}
+\begin{listing}[H]
+  \centering
+  \begin{ccode}
+  struct data { /* ... */ };
 
-  Registering a \verb|__gc| metamethod.
-  \todo{Write}
+  struct data* push_new_data (lua_State *L) {
+    struct data *d = lua_newuserdata (L, sizeof (struct data));
+    initialize_data (d);
+    return d;
+  }
+  \end{ccode}
+  \caption{Using Lua userdata to store values}
+  \label{lst:values-in-userdata}
+\end{listing}
+
+By default, userdata values have no predefined behaviour in Lua, except for
+assignment (which also covers passing userdata values as function parameters),
+and testing for identity. Assigning a metatable to an userdata value allows
+the programmer to define operations on userdata values.
+
+
+\subsection{GC Finalization}
+
+The only thing known by the Lua VM about userdata values is that they are
+a region of memory. That means that Lua will only free the memory region when
+the userdata is picked by the \gls{GC}. If the userdata contains resources
+other than raw memory (a file handle, for example), it must be ensured that
+those are released appropriately.
+
+\todo[inline]{continue this}
+
+\begin{listing}[H]
+  \small
+  \begin{center}
+    \emph{C code}
+  \end{center}
+\begin{ccode}
+/* Build with: cc -shared -o openlog.so openlog.c */
+
+struct logger {
+  FILE *output;
+};
+
+static int logger_call (lua_State *L) { /* ... */ }
+
+static int logger_gc (lua_State *L) {
+  struct logger *l = luaL_checkudata (L, 1, "LOGGER");
+  if (l->output) fclose (l->output); /* Close the file */
+  return 0;
+}
+
+static int logger_new (lua_State *L) {
+  const char *path = luaL_checkstring (L, 1);
+  lua_Integer verbosity = luaL_checkinteger (L, 2);
+  struct logger *l = lua_newuserdata (L, sizeof (struct logger));
+  if (!(l->output = fopen (path, "a")))
+    return luaL_error (L, "cannot open (\%s)", strerror (errno));
+  l->verbosity = (int) verbosity;
+  luaL_setmetatable (L, "LOGGER");
+  return 1;
+}
+
+int luaopen_openlog (lua_State *L) {
+  static const luaL_Reg metamethods[] = {
+    { "__call", logger_call, }
+    { "__gc", logger_gc, }
+    { NULL, NULL },
+  };
+  luaL_newmetatable (L, "LOGGER");
+  luaL_setfuncs (L, metamethods, 0);
+  lua_pushcfunction (L, logger_new);
+  return 1;
+}
+\end{ccode}
+
+  \begin{center}
+    \emph{Using the module from Lua}
+  \end{center}
+
+\begin{luacode}
+  local openlog = require("openlog")
+  local log = openlog("/var/log/example.log", true)
+  log("Log line")
+\end{luacode}
+
+  \caption{Small C module which demonstrates using a \texttt{\_\_gc} metamethod}
+  \label{lst:lua-gc-example-module}
+\end{listing}
 
 
 \section{Miscellanea}
