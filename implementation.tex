@@ -1,4 +1,4 @@
-% vim: ft=tex spell spelllang=en ts=2 sw=2 et foldlevel=2
+% vim: ft=tex spell spelllang=en ts=2 sw=2 et
 
 \chapter{Implementation}
 
@@ -81,13 +81,13 @@ a fixed amount of them, and the characteristics (size, name, etc) are well
 known. The challenging part is representing user defined types (\Mc|struct|,
 \Mc|enum|, \Mc|union|), and derived types (pointers, arrays).
 
-The data structure for describing types is \verb|EolTypeInfo| (listing
-\vref{lst:EolTypeInfo}). It is a tagged \Mc|struct|, with the tag
+The data structure for describing types is \verb|EolTypeInfo|
+(\autoref{lst:EolTypeInfo}). It is a tagged \Mc|struct|, with the tag
 indicatingthe type kind (\verb|EOL_TYPE_S32| for 32-bit signed integers,
 \verb|EOL_TYPE_STRUCT| for a \Mc|struct|, etc; the complete list of values
-can be seen in listing \vref{lst:EolType}). The contained data will vary
+can be seen in \autoref{lst:EolType}). The contained data will vary
 depending on the value of the \emph{kind} tag. The members for all possible
-values are grouped in an \mintinline{c}{union} in order to make them share the
+values are grouped in an \Mc|union| in order to make them share the
 same memory space.
 
 \begin{listing}[H]
@@ -331,7 +331,7 @@ by keeping a pointer to the \Mc|EolTypeInfo| that is read-only.
 \section{Type cache}
 
 The type cache is implemented as an opaque data structure which can only be
-used by means of its public API (Listing \autoref{lst:eol-typecache-api}). Internally
+used by means of its public API (\autoref{lst:eol-typecache-api}). Internally
 it is implemented as a hash table which reuses uthash~\cite{uthash-guide}, and
 it maps integer keys (\Mc|uint32_t|) to \Mc|EolTypeInfo| structures. Cache
 keys can be any unique integer which uniquely identifies a particular type.
@@ -420,28 +420,6 @@ static const luaL_Reg eollib[] = {
 As a last step, \verb|create_meta()| is called to register the metatables for
 the C types which \Eol* exposes to the Lua VM (\vref{sec:eol-mod-typemeta}).
 
-\subsection{Type Metatables}
-  \label{sec:eol-mod-typemeta}
-
-\subsection{Library loading}
-
-  \verb|eol_load| \todo{Write}
-
-\subsection{Type Information Lookup}
-
-  \verb|eol_type| \todo{Write}
-
-\subsection{Querying Types}
-
-  \verb|eol_typeof|
-  \verb|eol_sizeof|
-  \verb|eol_offsetof|
-  \todo{Write}
-
-\subsection{Casting}
-
-  \verb|eol_cast|
-
 
 \section{Memory Ownership and Life Cycle}
 
@@ -502,10 +480,12 @@ which means that userdata values which are no longer referenced by a Lua
 program are garbage collected. This effectively allows C programmers to reuse
 the Lua GC for their data.
 
-\begin{listing}[H]
+\begin{listing}[tH]
   \centering
   \begin{ccode}
   struct data { /* ... */ };
+
+  void initialize_data (struct data *d);
 
   struct data* push_new_data (lua_State *L) {
     struct data *d = lua_newuserdata (L, sizeof (struct data));
@@ -523,24 +503,61 @@ and testing for identity. Assigning a metatable to an userdata value allows
 the programmer to define operations on userdata values.
 
 
-\subsection{GC Finalization}
+\subsubsection{GC Finalization}
 
 The only thing known by the Lua VM about userdata values is that they are
 a region of memory. That means that Lua will only free the memory region when
 the userdata is picked by the \gls{GC}. If the userdata contains resources
 other than raw memory (a file handle, for example), it must be ensured that
-those are released appropriately.
+those are released appropriately. In order to coordinate the GC withthe
+management of resources unknown to the VM, Lua supports defining
+\emph{finalizer} functions.
 
-\todo[inline]{continue this}
+Lua requires the programmer to explicitly mark userdata to be finalized. This
+is done by setting its metatable: if the metatable contains contains
+a function (the finalizer) associated to the \Mlua|__gc| key, it is called
+after the userdata is marked by the GC as garbage, with the userdata itself
+being passed as the only argument. Once the userdata is finalized, the memory
+used by it will be normally released by Lua. The finalizer can be
+a C function, allowing native code to release any resources used by userdata.
 
-\begin{listing}[H]
+Using finalizers is needed when dealing with opaque types which are handled
+via pointers. The standard C library includes such a type: open files in C are
+handled using pointers to \Mc|FILE| values (for an example, see
+\autoref{lst:c-fileptr}), which are created when opening a file with
+\Mc|fopen()|. Files cannot be deallocated directly, and instead the
+\Mc|fclose()| function must be used. \autoref{lst:lua-gc-example-module}
+contains a complete example of a Lua module implemented in C which uses a
+finalizer to ensure that opened files are properly closed calling
+\Mc|fclose()| from the finalizer.
+
+\begin{listing}[tH]
+    \begin{ccode}
+    int main (int argc, char **argv) {
+        FILE *fd = fopen ("hello.txt", "w");
+        fprintf (fd, "Hello, C file!\n");
+        fclose (fd);
+        return 0;
+    }
+    \end{ccode}
+    \caption{Using an opaque \Mc|FILE*| in C.}
+    \label{lst:c-fileptr}
+\end{listing}
+
+Finalizers are used extensively in the implementation of the \Eol* Lua module.
+The module's own userdata types need finalization (details on those are
+provided in \autoref{sec:eol-mod-typemeta}), and it also allows to attach
+arbitrary Lua functions to values created by native code wrapped in an
+\Mc|EolVariable| userdata.
+
+
+\begin{listing}[tH]
   \small
   \begin{center}
-    \emph{C code}
+    \emph{C code, to be built with \texttt{cc -shared -o openlog.so
+    openlog.c}}
   \end{center}
 \begin{ccode}
-/* Build with: cc -shared -o openlog.so openlog.c */
-
 struct logger {
   FILE *output;
 };
@@ -592,6 +609,31 @@ int luaopen_openlog (lua_State *L) {
 \end{listing}
 
 
+\subsection{Type Metatables}
+  \label{sec:eol-mod-typemeta}
+
+  \todo[inline]{Write}
+
+\subsection{Library loading}
+
+  \verb|eol_load| \todo{Write}
+
+\subsection{Type Information Lookup}
+
+  \verb|eol_type| \todo{Write}
+
+\subsection{Querying Types}
+
+  \verb|eol_typeof|
+  \verb|eol_sizeof|
+  \verb|eol_offsetof|
+  \todo{Write}
+
+\subsection{Casting}
+
+  \verb|eol_cast|
+
+
 \section{Miscellanea}
 
 This section describes assorted techniques used in the implementation of
@@ -624,7 +666,7 @@ the \emph{generator}:
 (\verb|##|) of the preprocessor is used extensively to build pieces of valid
 C code. The example shows how the \verb|name| parameter is concatenated to
 create the name of the generated function, and the \verb|suffix| parameter is
-concatenated to create a valid \verb|EolType| (listing \vref{lst:EolType})
+concatenated to create a valid \verb|EolType| (\autoref{lst:EolType})
 value. A valid expansion of the above macro is:
 
 \begin{ccode*}{samepage=true}

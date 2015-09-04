@@ -243,19 +243,19 @@ to easily write programs in a functional programming style. Like in
 used as delimiters for language constructs. Another defining characteristic of
 the language is that, by design, it only provides one compound data structure,
 the \emph{table}, which is the basis for all user--defined types. Tables can
-be used as arrays (listing \ref{lst:lua-example-memoize}), structures, and
-objects (listing \ref{lst:lua-example-tables}).
+be used as arrays (\autoref{lst:lua-example-memoize}), structures, and
+objects (\autoref{lst:lua-example-tables}).
 
 A unique and powerful feature of Lua is its support for \emph{metatables}:
 values may have an associated table (the so-called \emph{metatable}) which
 allows to extend the semantics of language constructs, allowing to define how
 tables behave when arithmetic and relational operators are applied to tables,
-or how table fields are accessed. Listing \vref{lst:lua-example-memoize}
+or how table fields are accessed. \autoref{lst:lua-example-memoize}
 demostrates how customizing table access can be used to define a
 seemingly--infinite array which contains the $n^{th}$ \gls{fibonacci-number}
 at index $n$. A common use for metatables is enabling support for
 object--oriented programming, using them to define object inheritance chains
-(listing \ref{lst:lua-example-meta-oo}) --- as Lua itself does not have the
+(\autoref{lst:lua-example-meta-oo}) --- as Lua itself does not have the
 notion of classes, prototypes are used instead, as in the Self or JavaScript
 languages.
 
@@ -322,7 +322,7 @@ Microsoft's .NET environment.
 
 The Lua \gls{VM} exposes a C \gls{API} which, among other things, allows to
 register C functions to be called by Lua code. These communicate with the VM
-using a well-defined protocol (see listing \ref{lst:lua-c-api-example}
+using a well-defined protocol (see \autoref{lst:lua-c-api-example}
 for an example).
 
 \begin{listing}[H]
@@ -453,7 +453,7 @@ available as a regular Lua module which includes a number of support
 functions, including the ability to parse C-style declarations to obtain type
 information. Under the hood, the module generates the machine code for wrapper
 functions —of type \Mc|lua_CFunction| (c.f. \autoref{sec:lua-c-api})— using
-the LuaJIT code generator, which are directly callable (example in listing
+the LuaJIT code generator, which are directly callable (example in
 \autoref{lst:luajit-ffi-example}). A standalone
 \verb|luaffi|\footnote{\url{https://github.com/jmckaskill/luaffi}} module for
 the standard Lua \gls{VM} exists, which has the same interface as the LuaJIT
@@ -481,8 +481,7 @@ LGI to allow the enumeration of the available modules and their contents, as
 well as the transparent invocation of functions from Lua. The metadata
 recorded by GObject Introspection when scanning source code includes
 additional information in specially formatted comments, which allows LGI to
-create idiomatic object oriented interfaces (c.f.
-listing~\autoref{lst:lua-lgi-example}).
+create idiomatic object oriented interfaces (c.f. \autoref{lst:lua-lgi-example}).
 
 \begin{listing}[H]
 	\begin{luacode}
