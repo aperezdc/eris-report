@@ -418,7 +418,7 @@ keys detailed in \autoref{tab:eol-api-userdata-keys}.
 
 For compound data types (in C, \Mc|struct|s and \Mc|union|s), two additional
 operations are supported on their \textsf{CType} userdatas. The Lua length
-operator (\texttt\#, by means of a \texttt{\_\_gc} metamethod) returns the
+operator (\texttt\#, by means of a \texttt{\_\_len} metamethod) returns the
 number of members in the compound type, and indexing the userdata as an array
 —using numeric indexes— returns information about its \emph{nth} member, as
 a Lua table which contains the fields specified in
@@ -507,9 +507,38 @@ writing values of the elements are possible, by means of the
 Userdata values of type \textsf{Function} represent any piece of native code
 from a \textsf{Library} which can be invoked transparently from Lua.
 
+Information about a \textsf{Function} can be obtained by indexing the userdata
+(by means of an \texttt{\_\_index} metamethod) with the keys detailed in
+\autoref{tab:eol-api-function-keys}.
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{lp{0.7\textwidth}}
+		\toprule
+		Key & Description \\
+		\midrule
+		\texttt{\_\_name} & Name of the function, as a string. \\
+		\texttt{\_\_type} & Type of the return value, as a \textsf{CType}
+			userdata, or \Mlua|nil| if the function does not return a value. \\
+		\texttt{\_\_library} & Library which contains the function, as a
+			\textsf{Library} userdata. \\
+		\bottomrule
+	\end{tabular}
+	\caption{Keys available in \textsf{Function} userdatas}
+	\label{tab:eol-api-function-keys}
+\end{table}
+
+
 \subsubsection{Type information}
 
-	\todo[inline] {Write}
+\textsf{Function} userdata values provide information about their return type
+when indexing them with the \texttt{\_\_type} key, as seen in the previous
+section. Type information for function parameters is also provided: applying
+the Lua length operator (\texttt\#, by means of a \texttt{\_\_len} metamethod)
+returns the number of parameters accepted, and indexing the userdata as an
+array —using numeric indexes— returns the type information for the paramters
+as \textsf{CType} userdatas.
+
 
 \subsubsection{Invocation}
 
