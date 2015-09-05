@@ -12,30 +12,32 @@ We consider that the main goals set at the beginning of this project
 
 \begin{itemize}
 
-	\item Developing an automatic binding system for the Lua programming
+	\item Development of an automatic binding system for the Lua programming
 	language, allowing seamless usage of C libraries.
 
-	\item Using the DWARF debugging information contained in ELF shared object
-	files to pinpoint the details about function, and involved data types.
+	\item Use the DWARF debugging information contained in ELF shared object
+	files to pinpoint the details about invoked functions, and involved data
+	types.
 
-	\item Converting data values transparently between Lua and C.
+	\item Convertsion of data values transparently between Lua and C.
 
-	\item Providing a reference implementation for GNU/Linux running on the
+	\item Reference implementation for GNU/Linux running on the
 	x86\_86 architecture.
 
-	\item Avoiding modifications of the internals of the Lua VM. The
-	implementation was achieved using exclusively the Lua C API.
+	\item Full compliance with the Lua C API, avoiding modifications of the
+		internals of the Lua VM.
 
 \end{itemize}
 
-The C programming language was used to develop \Eol*, a Lua module which
-implements a FFI for Lua using the DWARF debugging information to gain
-knowledge about the types and functions available in ELF shared object files.
-Separating the code which deals with native function invocation allows
-selecting which method is used to invoke native functions from Lua at
-build-time. Two backends were implemented: one using \verb|libffi|, and
-a second one using JIT compilation (by means of DynASM) for the Intel x86\_64
-architecture to generate the needed glue code.
+The aforementioned achievements take the shape of the \Eol* system, developed
+in the C programming language. \Eol* is a Lua module which implements a FFI
+for Lua using the DWARF debugging information to gain knowledge about the
+types and functions available in ELF shared object files. Separating the code
+which deals with native function invocation allows us to select select which
+method is used to invoke native functions from Lua at build-time. Two backends
+were implemented: one using \verb|libffi|, and a second one using JIT
+compilation (by means of DynASM) for the Intel x86\_64 architecture to
+generate the needed glue code.
 
 Additionally, a test harness for Lua has been developed, due to the existing
 Lua unit testing frameworks aborting their execution in the event of a crash
