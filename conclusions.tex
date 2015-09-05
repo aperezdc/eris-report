@@ -169,16 +169,14 @@ new possibilities:
 	allow reading type information directly from it, without requiring that
 	the ELF shared objects include DWARF debugging information.
 
-	\item The generated code, when \Eol* is built with JIT code generation
-	enabled, could be saved to disk when it is known that it would not change
-	between different executions of the Lua VM. The generated code could be
-	saved in ELF object files, in order to load them reusing the Lua module
-	loader.
+	\item Saving the generated code to disk in ELF object files, when \Eol* is
+	built with JIT code generation enabled.	The generated code could be loaded
+	reusing the Lua module loader.
 
-	\item Implement reading debugging information in formats other than DWARF.
-	Ideally, there would be an interface that a “type information provider”
-	component could implement, and the DWARF provider would be just one of
-	many.
+	\item Implementing support for reading debugging information in formats
+	other than DWARF. Ideally, there would be an interface that a “type
+	information provider” component could implement, and the DWARF provider
+	would be just one of many.
 
 \end{itemize}
 
@@ -187,20 +185,20 @@ a moderate effort, and would certainly provide added value to the project:
 
 \begin{itemize}
 
-	\item While \Eol* is already Free Software, it lacks a community, and it
-	would be interesting to foster a healthy community around the project.
-	That would require writing more documentation (e.g. a quick start
-	tutorial, a walkthough of the features), and having public communication
-	channels (e.g. a mailing list, an \gls{IRC} chat room, participating in
-	the \verb|lua-l| list...).
+	\item Building a community around \Eol* is already Free Software, it lacks
+	a community, and it would be interesting to foster a healthy community
+	around the project. That would require writing more documentation (e.g.
+	a quick start tutorial, a walkthough of the features), and having public
+	communication channels (e.g. a mailing list, an \gls{IRC} chat room,
+	participating in the \verb|lua-l| list...).
 
-	\item Make sure that \Eol* works with Lua 5.2, and 5.1. Those are the
-	versions more widely deployed\todo{See if it's possible to add
+	\item Ensuring the compatibility of \Eol* works Lua 5.2, and 5.1. Those
+	are the versions more widely deployed\todo{See if it's possible to add
 	a citation}.
 
-	\item \Eol* usable with LuaJIT. Most modules using the Lua 	C API can be
-	built for LuaJIT as well. LuaJIT is designed to be compatible with Lua
-	5.1, while the current Implementation targets version 5.3.
+	\item Enabling use of \Eol* with LuaJIT. Most modules using the Lua C API
+	can be built for LuaJIT as well. LuaJIT is designed to be compatible with
+	Lua	5.1, while the current Implementation targets version 5.3.
 
 	\item Implementing JIT compilation of function invocations for
 	architectures other than x86, and x86\_64. This can be done with ease for

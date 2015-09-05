@@ -334,7 +334,7 @@ The type cache is implemented as an opaque data structure which can only be
 used by means of its public API (\autoref{lst:eol-typecache-api}). Internally
 it is implemented as a hash table which reuses uthash~\cite{uthash-guide}, and
 it maps integer keys (\Mc|uint32_t|) to \Mc|EolTypeInfo| structures. Cache
-keys can be any unique integer which uniquely identifies a particular type.
+keys can be any integer which uniquely identifies a particular type.
 For a \Mc|EolTypeInfo| created from its DWARF representation, the offset of
 the top-level \gls{DIE} is used as the key. This works because information for
 a particular type is never duplicated inside the same ELF file, so there is an
@@ -509,17 +509,17 @@ The only thing known by the Lua VM about userdata values is that they are
 a region of memory. That means that Lua will only free the memory region when
 the userdata is picked by the \gls{GC}. If the userdata contains resources
 other than raw memory (a file handle, for example), it must be ensured that
-those are released appropriately. In order to coordinate the GC withthe
+those are released appropriately. In order to coordinate the GC with the
 management of resources unknown to the VM, Lua supports defining
 \emph{finalizer} functions.
 
 Lua requires the programmer to explicitly mark userdata to be finalized. This
-is done by setting its metatable: if the metatable contains contains
-a function (the finalizer) associated to the \Mlua|__gc| key, it is called
-after the userdata is marked by the GC as garbage, with the userdata itself
-being passed as the only argument. Once the userdata is finalized, the memory
-used by it will be normally released by Lua. The finalizer can be
-a C function, allowing native code to release any resources used by userdata.
+is done by setting its metatable: if the metatable contains a function (the
+finalizer) associated to the \Mlua|__gc| key, it is called after the userdata
+is marked by the GC as garbage, with the userdata itself being passed as the
+only argument. Once the userdata is finalized, the memory used by it will be
+normally released by Lua. The finalizer can be a C function, allowing native
+code to release any resources used by userdata.
 
 Using finalizers is needed when dealing with opaque types which are handled
 via pointers. The standard C library includes such a type: open files in C are
@@ -633,12 +633,6 @@ int luaopen_openlog (lua_State *L) {
 
   \verb|eol_cast|
 
-
-\section{Miscellanea}
-
-This section describes assorted techniques used in the implementation of
-\Eol* which do not fall under a common umbrella, yet they deserve to be
-mentioned.
 
 \subsection{Preprocessor “Generator Macros”}
   \label{sec:cpp-abuse-genmacros}

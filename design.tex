@@ -1,6 +1,7 @@
 % vim: ft=tex spell spelllang=en ts=2 sw=2
 \cleardoublepage
-\chapter{Design}
+
+\chapter{Analysis \& Design}
 
 \section{Naming}
 
@@ -96,12 +97,12 @@ The \gls{API} exposed by the \Eol* module to the Lua world is loosely modelled
 after the one provided by the LuaJIT FFI module~\cite{lj-ffi-api} —also
 implemented by the standalone \verb|luaffi| module~\cite{luaffi}—, with some
 functions even having the same names and semantics, and others differing where
-appropriate—for example, \Eol* does not need to provide a function to parse
+appropriate. For example, \Eol* does not need to provide a function to parse
 C-like declarations because the type information is obtained from the
 \gls{DWARF} debugging information instead. The goal is to provide an API which
-is proven to be suitable for Lua FFIs, and at the same time allowing
+is proven to be suitable for Lua FFIs, and at the same time not force
 programmers who have used the LuaJIT FFI —or the standalone \verb|luaffi|— to
-avoid learning how to use a completely different API.
+learn how to use a completely different API.
 
 \subsection{The \texttt{eol} Namespace}
 
@@ -114,31 +115,41 @@ standard Lua module loader, via the \Mlua|require()| function:
 eol = require("eol")
 \end{luacode}
 
-Unless started otherwise, in the specification of the functions that follows
-parameters named \texttt{typevalue} accept both a \textsf{CType} values, or
-\textsf{Variable} values, in which case the type associated with the variable
-will be used.
+Unless started otherwise, in the specification of the functions summarized in
+\autoref{tab:eol-api-functions-summary}, parameters named \texttt{typevalue}
+accept both a \textsf{CType} values, or \textsf{Variable} values, in which
+case the type associated with the variable will be used. Also, functions can
+generate Lua errors when the types of values passed to them are incorrect.
 
 
 \begin{table}[ht]
 	\centering
-	\begin{tabular}{lc}
+	\begin{tabular}{lcc}
 		\toprule
-		Function & In LuaJIT FFI? \\
+		Function & LJ & Err \\
 		\midrule
-\Mlua|library   = eol.load(name, global)| & \Tick \\
-\Mlua|typeinfo  = eol.type(library, name)| & \\
-\Mlua|typeinfo  = eol.typeof(typevalue)| & \Tick \\
-\Mlua|size      = eol.sizeof(typevalue)| & \Tick \\
-\Mlua|alignment = eol.alignof(typevalue)| & \Tick \\
-\Mlua|offset    = eol.offsetof(typevalue, field)| & \Tick \\
-\Mlua|value     = eol.cast(typeinfo, value)| & \Tick \\
-\Mlua|flag      = eol.abi(parameter)| & \Tick \\
+\Mlua|library   = eol.load(name, global)|  & \Tick & \Tick \\
+\Mlua|typeinfo  = eol.type(library, name)| &       & \Tick \\
+\Mlua|typeinfo  = eol.typeof(typevalue)|   & \Tick & \Tick \\
+\Mlua|size      = eol.sizeof(typevalue)|   & \Tick &       \\
+\Mlua|alignment = eol.alignof(typevalue)|  & \Tick &       \\
+\Mlua|offset    = eol.offsetof(typevalue, field)| & \Tick &\\
+\Mlua|value     = eol.cast(typeinfo, value)| & \Tick & \\
+\Mlua|flag      = eol.abi(parameter)| & \Tick & \\
 \bottomrule
 \end{tabular}
 
+	\vspace{2pt}
+
+	\begin{small}
+	\begin{tabular}{lp{0.65\textwidth}}
+		\emph{LJ} & \emph{Function available in the LuaJIT FFI module} \\
+		\emph{Err}& \emph{May raise a Lua error while reading debugging information} \\
+	\end{tabular}
+	\end{small}
+
 	\caption{API functions in the \texttt{eol} namespace}
-	\label{lst:eol-api-functions-summary}
+	\label{tab:eol-api-functions-summary}
 \end{table}
 
 
@@ -159,22 +170,24 @@ Loads a library given its \texttt{name}, and returns it as a \textsf{Library}
 userdata value. The library \texttt{name} is specified without the file
 extension, because the module will add the appropriate extension for the
 operating system being used (e.g. \texttt{.so} for GNU/Linux). The library is
-then searched in the given order of preference:
+then searched for the given order of preference:
 
 \begin{enumerate}
 
-	\item \texttt{name} is an absolute path, and points to an existing file.
+	\item \texttt{name} is an absolute path, and points to an existing file
 
 	\item \texttt{name} is a relative path which, using the working directory as
-	starting point, can be resolved to an existing file.
+	starting point, can be resolved to an existing file
 
 	\item \texttt{name} does not contain path separators, and a library with
 	a matching name exists in one of the standard locations for shared libraries
 	of the operating system being used (e.g. \texttt{/lib}, \texttt{/usr/lib},
-	and \texttt{/usr/local/lib} for most Unix-like systems, including
-	GNU/Linux).
+	and \texttt{/usr/local/lib} for most Unix-like systems, including GNU/Linux)
 
 \end{enumerate}
+
+If a suitable library could not be found using the method outlined above, or
+it could not be lodeaded, the function raises a Lua error.
 
 The \texttt{global} parameter is a boolean value which determines how the
 symbols from the loaded library interact with the ones from other libraries.
@@ -195,13 +208,9 @@ typeinfo = eol.type(library, name)
 \end{luacode}
 
 Obtains the information for a type of a given \texttt{name}, contained in
-a \texttt{library}. The result is returned as a \textsf{CType} userdata.
+a \texttt{library}. The result is returned as a \textsf{CType} userdata. If
+the type is not found in the library, \Mlua|nil| is returned instead.
 
-% cdata = eol.new(...)
-% 	UNAVAILABLE / UNNEEDED
-%
-% cdata = ctype([nelem ,] [init...])
-% 	Works, without "init..."
 
 \subsubsection{Function \texttt{eol.typeof}}
 	\label{sec:eol-api-typeof}
@@ -213,6 +222,15 @@ a \texttt{library}. The result is returned as a \textsf{CType} userdata.
 Obtains the type of \texttt{typevalue}, and returns it as a \textsf{CType}
 userdata.
 
+\begin{luacode}
+	typeinfo = eol.typeof(name)
+\end{luacode}
+
+Alternatively, it is possible to pass a string with the \texttt{name} of
+a type, and it will be searched for in all the currently loaded libraries.
+This second invocation method is an \Eol* extension which is not available in
+the LuaJIT FFI module.
+
 \subsubsection{Function \texttt{eol.sizeof}}
 
 \begin{luacode}
@@ -221,10 +239,10 @@ userdata.
 
 Obtains the size of \texttt{typevalue}, in bytes. If \texttt{typevalue} is
 a \textsf{CType} userdata, the size returned corresponds to the size of values
-of the type. If a size is not known (e.g. for \Mc|void|, or functions),
-any value which evaluates to a false truth value (\Mlua|false|, \Mlua|nil|, or
-\Mlua|0|) is returned.
+of the type. If the size is not known (e.g. for \Mc|void|, or functions),
+\Mlua|nil| is returned instead.
 
+For any other values, an error is 
 
 \subsubsection{Function \texttt{eol.alignof}}
 	\label{sec:eol-api-alignof}
@@ -244,7 +262,9 @@ offset = eol.offsetof(typevalue, field)
 \end{luacode}
 
 Obtains the offset in bytes of \texttt{field} inside \texttt{typevalue}, which
-must be a record data type (a \Mc|struct| in C).
+must be a record data type (a \Mc|struct| in C). The \texttt{field} can be
+specified as positive integer, or as a string. In the latter case, if there is
+no field with the given name, a Lua error is raised.
 
 \subsubsection{Function \texttt{eol.cast}}
 	\label{sec:eol-api-cast}
@@ -257,7 +277,7 @@ Creates and returns a new \textsf{Variable} userdata which describes the same
 memory area as the passed \texttt{value}, but associates a new
 \texttt{typeinfo} to it.
 
-This function can be used to change the type associated to a \textsf{Variable}
+This function can be used to change the type associated with a \textsf{Variable}
 userdata, without changing the value itself. It is useful to manually override
 the pointer compatibility checks, or to convert between pointer values and
 addresses represented as integers.
@@ -379,7 +399,7 @@ new_value = typeinfo(n)
 A \textsf{CType} userdata is also a \gls{constructor} for values of the type
 it represents, by means of its \texttt{\_\_call} metamethod. Invoking
 a \value{CType} as a constructor accepts an optional parameter: if supplied,
-an array of \texttt{n} elements is created, otherwise a single element is
+an array of \texttt{n} elements is created; otherwise a single element is
 created. The memory used to store the value is initialized by filling it with
 zero (\texttt{'\\0'}) bytes.
 
@@ -412,12 +432,12 @@ keys detailed in \autoref{tab:eol-api-userdata-keys}.
 			Otherwise \Mlua|nil|. \\
 		\bottomrule
 	\end{tabular}
-	\caption{Keys available in \textsf{CType} userdatas}
+	\caption{Keys available in \textsf{CType} userdata}
 	\label{tab:eol-api-userdata-keys}
 \end{table}
 
 For compound data types (in C, \Mc|struct|s and \Mc|union|s), two additional
-operations are supported on their \textsf{CType} userdatas. The Lua length
+operations are supported on their \textsf{CType} userdata. The Lua length
 operator (\texttt\#, by means of a \texttt{\_\_len} metamethod) returns the
 number of members in the compound type, and indexing the userdata as an array
 —using numeric indexes— returns information about its \emph{nth} member, as
@@ -471,17 +491,24 @@ value has a pointer to the region of memory occupied by the actual data, and
 an associated \textsf{CType} which determines how the pointer to the data is
 used.
 
-The actual value represented by the \textsf{Variable} userdatas and information
+The actual value represented by the \textsf{Variable} userdata and information
 about them can be obtained by indexing the userdatas (by means of an
 \texttt{\_\_index} metamethod) with the keys detailed in
 \autoref{tab:eol-api-variable-keys}.
 
 For \textsf{Variable}s with an associated array \textsf{CType}, it is possible
-to use the Lua length operator (\texttt\#, by means of a \texttt{\_\_len}
-metamethod) to obtain the number of elements in the array, and manipulating
-the values of individual elements using numeric indexes (both reading and
-writing values of the elements are possible, by means of the
-\texttt{\_\_index} and \texttt{\_\_newindex} metamethods, respectively).
+to manipulate the variable directly as if it were a Lua array, using the
+\Mlua|variable[index]| syntax, and the length operator (\texttt\#) returns
+the number of elements in the array.
+
+% \texttt{\_\_index} and \texttt{\_\_newindex} metamethods allow
+%
+% contents using normal array
+% to use the Lua length operator (\texttt\#, by means of a \texttt{\_\_len}
+% metamethod) to obtain the number of elements in the array, and manipulating
+% the values of individual elements using numeric indexes (both reading and
+% writing values of the elements are possible, by means of the
+% \texttt{\_\_index} and \texttt{\_\_newindex} metamethods, respectively).
 
 \begin{table}[ht]
 	\centering
@@ -496,7 +523,7 @@ writing values of the elements are possible, by means of the
 			a \textsf{Library} userdata. It may be \Mlua|nil| for variables created from Lua. \\
 		\bottomrule
 	\end{tabular}
-	\caption{Keys available in \textsf{Variable} userdatas}
+	\caption{Keys available in \textsf{Variable} userdata}
 	\label{tab:eol-api-variable-keys}
 \end{table}
 
@@ -524,7 +551,7 @@ Information about a \textsf{Function} can be obtained by indexing the userdata
 			\textsf{Library} userdata. \\
 		\bottomrule
 	\end{tabular}
-	\caption{Keys available in \textsf{Function} userdatas}
+	\caption{Keys available in \textsf{Function} userdata}
 	\label{tab:eol-api-function-keys}
 \end{table}
 
@@ -537,22 +564,22 @@ section. Type information for function parameters is also provided: applying
 the Lua length operator (\texttt\#, by means of a \texttt{\_\_len} metamethod)
 returns the number of parameters accepted, and indexing the userdata as an
 array —using numeric indexes— returns the type information for the paramters
-as \textsf{CType} userdatas.
+as \textsf{CType} userdata.
 
 
 \subsubsection{Invocation}
 
 The \texttt{\_\_call} metamethod is implemented for \textsf{Function}
 userdata values, effectively making them directly callable from Lua. Invoking
-native code involves more work than jumping into it:
+native code involves:
 
 \begin{enumerate}
 
-	\item Check that the number of parameters passed to the function from Lua
+	\item Checking that the number of parameters passed to the function from Lua
 	match the amount accepted by the native function.
 
-	\item Allocate as much scratch space as needed to pass the parameters to
-	the native function in, plus the space needed for the return value (if any).
+	\item Allocating as much space as needed to pass the parameters to
+	the native Function, plus the space needed for the return value (if any).
 	The amount of space needed must be calculated using the sizes of the native
 	types, as used by the native function.
 
@@ -560,22 +587,22 @@ native code involves more work than jumping into it:
 
 		\begin{enumerate}
 
-			\item Check that the type of the Lua value is compatible and can be
+			\item Checking that the type of the Lua value is compatible and can be
 			converted to a value of the type expected by the native function.
 
-			\item Convert the Lua value to the corresponding native type, and store
-			the result in the scratch space.
+			\item Converting the Lua value to the corresponding native type, and
+				storing the result in the allocated space.
 
 		\end{enumerate}
 
-	\item If the in-memory layout of the data in the scratch space does not
-	match the layout defined by the \gls{ABI} of the target architecture and
-	operating system, re-arrange the data as needed.
+	\item Re-arranging the data as needed, if the in-memory layout of the
+		allocated data does not match the layout defined by the \gls{ABI} of the
+		target architecture and operating system.
 
-	\item Invoke the native function by jumping to its start address.
+	\item Invoking the native function by jumping to its start address.
 
-	\item If there is a return value, convert it to a Lua value, and push it
-	into the Lua stack.
+	\item Converting the return value, if any, to a Lua value, and pushing
+		and pushing it into the Lua stack.
 
 \end{enumerate}
 
