@@ -377,50 +377,6 @@ lifetime of each loaded ELF object. This approach allows to simply iterate
 over the elements to free each one of them before unloading the object file.
 
 
-\section{\Eol* Lua module}
-
-The top-level API exposed to Lua is the \verb|eol| module, which has to be
-returned by the C function that the Lua VM calls after loading an extension
-module. This function is always called \verb|luaopen_<module>|, where
-\verb|<module>| is the name of the module being loaded:
-
-\begin{ccode}
-LUAMOD_API int
-luaopen_eol (lua_State *L)
-{
-  eol_trace_setup ();
-
-  (void) elf_version (EV_NONE);
-  if (elf_version (EV_CURRENT) == EV_NONE)
-    return luaL_error (L, "outdated libelf version");
-
-  luaL_newlib (L, eollib);
-  create_meta (L);
-  return 1;
-}
-\end{ccode}
-
-Notice how the function uses \verb|luaL_newlib()| instead of manually creating
-a table in the Lua stack, and setting a field for each one of the \verb|eol.*|
-module level functions. The \verb|eollib| variable is defined as follows,
-using the supplied \verb|luaL_Reg| type:
-
-\begin{ccode}
-static const luaL_Reg eollib[] = {
-  { "load",     eol_load     },
-  { "type",     eol_type     },
-  { "sizeof",   eol_sizeof   },
-  { "typeof",   eol_typeof   },
-  { "offsetof", eol_offsetof },
-  { "cast",     eol_cast     },
-  { NULL, NULL },
-};
-\end{ccode}
-
-As a last step, \verb|create_meta()| is called to register the metatables for
-the C types which \Eol* exposes to the Lua VM (\vref{sec:eol-mod-typemeta}).
-
-
 \section{Memory Ownership and Life Cycle}
 
 Native code uses a different approach for memory management compared to Lua:
@@ -470,6 +426,7 @@ avoided.
 
 
 \subsection{Lua as a Custom Allocator}
+  \label{sec:userdata-lua-custom-allocator}
 
 The Lua VM exposes in its C API the ability to create \emph{userdata} objects.
 For the VM, userdata is seen as an opaque value which, by default, cannot be
@@ -609,10 +566,107 @@ int luaopen_openlog (lua_State *L) {
 \end{listing}
 
 
-\subsection{Type Metatables}
+\section{\Eol* Lua module}
+
+The top-level API exposed to Lua is the \verb|eol| module, which has to be
+returned by the C function that the Lua VM calls after loading an extension
+module. This function is always called \verb|luaopen_<module>|, where
+\verb|<module>| is the name of the module being loaded:
+
+\begin{ccode}
+LUAMOD_API int
+luaopen_eol (lua_State *L)
+{
+  eol_trace_setup ();
+
+  (void) elf_version (EV_NONE);
+  if (elf_version (EV_CURRENT) == EV_NONE)
+    return luaL_error (L, "outdated libelf version");
+
+  luaL_newlib (L, eollib);
+  create_meta (L);
+  return 1;
+}
+\end{ccode}
+
+Notice how the function uses \verb|luaL_newlib()| instead of manually creating
+a table in the Lua stack, and setting a field for each one of the \verb|eol.*|
+module level functions. The \verb|eollib| variable is defined as follows,
+using the supplied \verb|luaL_Reg| type:
+
+\begin{ccode}
+static const luaL_Reg eollib[] = {
+  { "load",     eol_load     },
+  { "type",     eol_type     },
+  { "sizeof",   eol_sizeof   },
+  { "typeof",   eol_typeof   },
+  { "offsetof", eol_offsetof },
+  { "cast",     eol_cast     },
+  { NULL, NULL },
+};
+\end{ccode}
+
+As a last step, \verb|create_meta()| is called to register the metatables for
+the C types which \Eol* exposes to the Lua VM (\vref{sec:eol-mod-typemeta}).
+
+
+\subsection{Userdata Metatables}
   \label{sec:eol-mod-typemeta}
 
-  \todo[inline]{Write}
+Metatables for the userdata types (\textsf{Library}, \textsf{Function},
+\textsf{CType}, and \textsf{Variable}) are created at the time when the \Eol*
+module is loaded by the Lua VM, in the \verb|create_meta()| C function.
+Exactly one metatable for each type, and all the userdata values of the same
+type share the same metatable. All the metatables have some common entries:
+
+\begin{itemize}
+
+  \item A \verb|__gc| metamethod responsible for decreasing the reference
+  count of the associated \textsf{Library}.
+
+  \item A \verb|__tostring| metamethod, in order to provide a string
+  representation of the values of the userdata. This is used by the Lua
+  \Mlua|tostring()| function.
+
+  \item A \verb|__index| metamethod, which provides support for indexing the
+  userdata. The concrete behavior depends on the type of the userdata.
+
+\end{itemize}
+
+For each metatable, an array of \Mc|struct luaL_Reg| values is created. It
+contains list of metamethods and pointers to the C functions which implement
+them. The example for is for \textsf{Library}; the rest are omitted here
+because of the strong similarity:
+
+\begin{ccode}
+/* Methods for Library userdata. */
+static const luaL_Reg library_methods[] = {
+    { "__gc",       library_gc       },
+    { "__tostring", library_tostring },
+    { "__index",    library_index    },
+    { "__eq",       library_eq       },
+    { NULL, NULL }
+};
+\end{ccode}
+
+Then, in the \verb|create_meta()| function, the metatable is created with the
+aid of the \verb|luaL_newmetatable()| utility function, which arranges for the
+metatable to be available for checking the types of an userdata value later on
+with the companion functions \verb|luaL_checkudata()| and \verb|luaL_testudata()|:
+
+\begin{ccode}
+static void
+create_meta (lua_State *L) {
+    /* EolLibrary */
+    luaL_newmetatable (L, EOL_LIBRARY);
+    luaL_setfuncs (L, library_methods, 0);
+    lua_pop (L, 1);
+
+    /* ... */
+}
+\end{ccode}
+
+\todo[inline]{Got time? Describe how lookups are done, it is relatively interesting}
 
 \subsection{Library loading}
 
@@ -624,10 +678,40 @@ int luaopen_openlog (lua_State *L) {
 
 \subsection{Querying Types}
 
-  \verb|eol_typeof|
-  \verb|eol_sizeof|
-  \verb|eol_offsetof|
-  \todo{Write}
+The \verb|eol.typeof()| function accepts arguments of different types.
+The \verb|luaL_check*()| family of functions from the Lua C API raise an error
+if the argument does is not of the expected type, and therefore some
+additional work is needed to ensure that it works as specified:
+
+\begin{ccode}
+static int
+eol_typeof (lua_State *L) {
+  if (luaL_testudata (L, 1, EOL_TYPEINFO)) {
+    lua_settop (L, 1);
+  } else {
+    EolVariable *ev = luaL_testudata (L, 1, EOL_VARIABLE);
+    if (ev) {
+      typeinfo_push_userdata (L, ev->typeinfo);
+    } else {
+      luaL_checktype (L, 1, LUA_TSTRING);
+      const char *name = lua_tostring (L, 1);
+      /* Omitted: Lookup type by name in all loaded libraries */
+      typeinfo_push_userdata (L, typeinfo);
+    }
+  }
+  return 1;
+}
+\end{ccode}
+
+Functions \verb|eol.sizeof()|, \verb|eol.alignof|, and \verb|eol.offsetof| are
+all implemented similary, with the exception that they omit the code to look
+up the type information when passing a string argument. Once the corresponding
+\verb|EolTypeInfo| is found, it can be queried for the requested information:
+\verb|eol_typeinfo_sizeof()| to obtain the size,
+\verb|eol_typeinfo_alignment()| for the alignment, and for obtaining the offset
+of a \Mc|struct| member, the information is available in the
+\verb|EolTypeInfoMember| value returned by the
+\verb|eol_typeinfo_compound_named_member()|.
 
 \subsection{Casting}
 

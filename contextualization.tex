@@ -205,7 +205,33 @@ has since evolved into a general purpose programming language. It has been
 used in proffessional applications (e.g. Adobe Lightroom) and it has seen
 widespread usage in the video games industry (e.g. World Of Warcraft).
 
-\begin{listing}[H]
+\begin{listing}[htH]
+  \begin{luacode}
+    fib = { 1, 1 }
+    setmetatable(fib, {
+      __index = function (values, n)
+        -- Calculate and memoize the Fibonacci(n)
+        values[n] = values[n - 1] + values[n - 2]
+        return values[n]
+      end
+    })
+    print(fib[10])  --> 55
+  \end{luacode}
+  \caption{\Gls{memoization} and \gls{dynamic-programming} using a Lua metatable}
+	\label{lst:lua-example-memoize}
+\end{listing}
+
+Lua's main programming paradigm is imperative, but the language supports
+functions as \glspl{first-class-value} and \glspl{closure}, making it possible
+to easily write programs in a functional programming style. Like in
+\gls{pascal}, English words (\Mlua|function|, \Mlua|then|, \Mlua|end|) are
+used as delimiters for language constructs. Another defining characteristic of
+the language is that, by design, it only provides one compound data structure,
+the \emph{table}, which is the basis for all user--defined types. Tables can
+be used as arrays (\autoref{lst:lua-example-memoize}), structures, and
+objects (\autoref{lst:lua-example-tables}).
+
+\begin{listing}[htH]
   \begin{luacode}
     -- Create a table, with one key, "age" and 7 as value
     animal = { age = 7 }
@@ -236,15 +262,6 @@ widespread usage in the video games industry (e.g. World Of Warcraft).
   \label{lst:lua-example-tables}
 \end{listing}
 
-Lua's main programming paradigm is imperative, but the language supports
-functions as \glspl{first-class-value} and \glspl{closure}, making it possible
-to easily write programs in a functional programming style. Like in
-\gls{pascal}, English words (\Mlua|function|, \Mlua|then|, \Mlua|end|) are
-used as delimiters for language constructs. Another defining characteristic of
-the language is that, by design, it only provides one compound data structure,
-the \emph{table}, which is the basis for all user--defined types. Tables can
-be used as arrays (\autoref{lst:lua-example-memoize}), structures, and
-objects (\autoref{lst:lua-example-tables}).
 
 A unique and powerful feature of Lua is its support for \emph{metatables}:
 values may have an associated table (the so-called \emph{metatable}) which
@@ -259,23 +276,7 @@ object--oriented programming, using them to define object inheritance chains
 notion of classes, prototypes are used instead, as in the Self or JavaScript
 languages.
 
-\begin{listing}[H]
-  \begin{luacode}
-    fib = { 1, 1 }
-    setmetatable(fib, {
-      __index = function (values, n)
-        -- Calculate and memoize the Fibonacci(n)
-        values[n] = values[n - 1] + values[n - 2]
-        return values[n]
-      end
-    })
-    print(fib[10])  --> 55
-  \end{luacode}
-  \caption{\Gls{memoization} and \gls{dynamic-programming} using a Lua metatable}
-	\label{lst:lua-example-memoize}
-\end{listing}
-
-\begin{listing}[H]
+\begin{listing}[htH]
   \begin{luacode}
     -- Base object describing an unnamed living creature
     animal = {
@@ -325,7 +326,7 @@ register C functions to be called by Lua code. These communicate with the VM
 using a well-defined protocol (see \autoref{lst:lua-c-api-example}
 for an example).
 
-\begin{listing}[H]
+\begin{listing}[htH]
 	\begin{ccode}
   int sum_and_average (lua_State *L) {
     lua_Number result = 0.0;
@@ -374,6 +375,15 @@ it must adhere to the following protocol:
 		stack below the results are discarded.
 
 \end{itemize}
+
+Values of data managed by native code can be handled by the Lua VM as
+\emph{userdata}. Even though userdata values are opaque to Lua, setting their
+metatable allows the programmer to define their behavior using the same
+language (e.g. C, C++) from which the VM is embedded. This is crucial for
+avoiding data corruption, as it can only be manipulated by native code in
+the way the programmer intended. See
+\autoref{sec:userdata-lua-custom-allocator} for additional discussion
+on this topic.
 
 The C API provided by Lua is comprehensive, but using it tends to produce
 verbose programs, with varying amounts of repeated code. Lua itself

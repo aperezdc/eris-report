@@ -20,6 +20,23 @@ closest relationships with dwarves, and one of the first able to speak their
 language.  \Eol* can also be an \gls{backronym} for “ELF Object Loader”,
 which describes well the purpose of the developed solution.
 
+
+\section{Overview}
+
+The main components of \Eol* are shown in \autoref{fig:eol-architecture}.
+
+The design of the system revolves around the \textsf{Type Information}: it
+describes native types in detail, and it is used by all the other components
+in different ways to provide their functionality. Its importance should not be
+surprising, because the ultimate goal of \Eol* is allowing seamless invocation
+of native functions which, being close to the bare metal, always conform to
+strict \gls{ABI} specifications. While starting execution of a native function
+is as simple as generating a jump machine instruction to its start address in
+memory, the function will only behave as expected if the data it uses —its
+parameters, space for return values, etc.— is laid out in memory exactly in
+the way its machine code expects it to be. In turn, this layout depends on the
+types of the values passed to and from the function.
+
 \tikzstyle{component} = [
   draw=black,
   thick,
@@ -78,16 +95,92 @@ which describes well the purpose of the developed solution.
   \label{fig:eol-architecture}
 \end{figure}
 
+There are four components which form part of the interface to Lua (as
+specified in \autoref{sec:design-lua-api}):
 
-\section{Architecture}
+\begin{itemize}
 
-	\todo[inline]{Write}
+	\item \textsf{Library} (\autoref{sec:eol-api-library-t}) represents a loaded
+	ELF library. It is responsible of accessing the DWARF debugging information,
+	and looking up values of the other types.
+
+	\item \textsf{CType} (\autoref{sec:eol-api-ctype-t}) represents a native
+	data type. It is responsible for providing information about the represented
+	native type, and for creating native values of the represented native type
+	from Lua. The types available to C programs are supported, hence the name.
+
+	\item \textsf{Variable} represents a variable from a library. It is
+		responsible for allowing reading and writing its value from Lua,
+		performing conversions as needed.
+
+	\item \textsf{Function} represents a fragment of native code contained in a
+		library, which can be invoked as a function. It is responsible for
+		performing calls into native code from Lua.
+
+\end{itemize}
+
+Looking up type information involves reading the DWARF debugging information
+from disk and decoding it appropriately. In order to avoid repeatedly reading
+the debugging information from disk to construct new \textsf{Type Information}
+values, each \textsf{Library} makes use of a \textsf{Type Cache} which keeps
+the information in memory. An additional benefit of the cache is that it
+allows reusing the \textsf{Type Information}: many DWARF \gls{DIE}s contain
+references to others\todo{Got time? Add a diagram with an example}, and the
+cache can be queried to determine whether a referenced DIE has been already
+turned into \textsf{Type Information}, and use the data from the cache
+instead.
 
 
-\section{Interaction With the Lua \gls{GC}}
+\section{Interaction With the Lua GC}
 	\label{sec:design-gc-interaction}
 
-	\todo[inline]{Write}
+Userdata values are subject to the Lua \gls{GC} (c.f.
+\autoref{sec:userdata-lua-custom-allocator}), which poses a problem for the
+\textsf{Library} userdata: if the Lua VM does not keep an active reference to
+a \textsf{Library} value, the GC will consider it to be garbage, and
+deallocate it while it may be still referenced by other resources. In
+particular, library cannot be unloaded while there is any \textsf{CType},
+\textsf{Function}, or \textsf{Variable} userdata which belong to the library
+being used from Lua. This kind of situation can be triggered by the following
+simple sequence of events, illustrated by \autoref{lst:library-gc-issue}:
+
+\begin{listing}[ht]
+	\begin{luacode}
+		function loadfunction(libname, funcname)
+		  local eol = require("eol")
+		  local lib = eol.load(libname)
+		  return lib[funcname]
+		end
+		-- Obtain an userdata for the add() function from libtest.so
+		add = loadfunction("libtest", "add")
+		-- Crashes if the GC has already collected the library.
+		print(add(6, 5))
+	\end{luacode}
+	\caption{Lua example which makes a \textsf{Library} subject to GC}
+	\label{lst:library-gc-issue}
+\end{listing}
+
+\begin{enumerate}
+
+	\item A library is loaded and returned to Lua as a \textsf{Library}
+		userdata. The userdata is assigned to a temporary variable (e.g.
+		a \Mlua|local| variable inside a \Mlua|function|) which eventually
+		will go out of scope.
+	\item A \textsf{Function} userdata is obtained for a native function
+		contained by the library.
+	\item The GC determines that the \textsf{Library} userdata is garbage,
+		and frees the resources used by it. This unloads the library.
+	\item At this point, invoking the function crashes the program because
+		its machine code, contained in the library, is no longer loaded in
+		memory.
+
+\end{enumerate}
+
+The solution for this problem is to use \gls{refcounting}, to ensure that the
+libraries are kept loaded while needed: each active userdata value of type
+\textsf{Function}, \textsf{CType}, or \textsf{Variable} contributes to the
+reference count. This way, a library is unloaded only when its reference count
+reaches zero.
 
 
 \section{Module API}
