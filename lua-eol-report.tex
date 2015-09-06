@@ -57,32 +57,28 @@
 \usepackage[open]{bookmark}
 \bookmarksetup{color=blue}
 
-\usepackage[nohints]{minitoc}
+\usepackage{placeins}
+\usepackage[nohints,tight]{minitoc}
 \mtcsetrules{minitoc}{off}
-\newcommand{\dochaptertoc}{%
-  % \vspace{1.85\baselineskip} % workaround for removed rule
-  % \smash{\makebox[\linewidth]{\hrulefill}} % workaround for removed rule
-  % \vspace{-1.85\baselineskip} % workaround for removed rule
-  \minitoc
-  % \vspace{-1.15\baselineskip} % workaround for removed rule
-  % \smash{\makebox[\linewidth]{\hrulefill}} % workaround for removed rule
-  % \vspace{1.15\baselineskip} % workaround for removed rule
-}
+\setlength{\mtcindent}{1ex}
+\renewcommand{\mtifont}{\sf\bf\normalsize}
+% \renewcommand{\mtcfont}{\footnotesize\bf}
+% \renewcommand{\mtcSfont}{\footnotesize\rm}
+% \renewcommand{\mtcSSfont}{\footnotesize\rm}
+
 \newcommand{\setchaptertoc}{%
-  \setchapterpreamble{% KOMA-Script command
-    \dochaptertoc%
-  }}
+  \setchapterpreamble{\minitoc}}
+
 \newcommand\beforeintro{%
-  %\vspace{0.35\baselineskip}%
   \begin{center}%
     \Large\Symbol{🙠}%
   \end{center}%
+  \FloatBarrier%
 }
 \newcommand\afterintro{%
   \begin{center}%
 	\Large\Symbol{🙣}%
   \end{center}%
-  %\vspace{0.5\baselineskip}%
 }
 
 
@@ -294,8 +290,9 @@ Laura Milagros Castro Souto\relax}
 \begin{raggedleft} \itshape
 
 To my wife, who supported unconditionally me during the long hours I have
-devoted to this project, and helped to proof-read the final iterations of the
-present document.
+devoted to this project.
+% , and helped to proof-read the final iterations of the
+% present document.
 
 \vspace{2cm}
 

@@ -1,14 +1,14 @@
 % vim: ft=tex spell spelllang=en ts=2 sw=2 et
 
-\cleardoublepage
 \setchaptertoc
 \chapter{Implementation}
 
-This chapter provides both guidance to browse the \Eol* source code, and
-insight into the details worth mentioning of the implementation of the system.
+This chapter provides both guidance to browse the \Eol* source
+code~\cite{eol-github}, and insight into the details worth
+mentioning of the implementation of the system.
 
-% XXX No symbol??
-% \afterintro
+% \enlargethispage{2\baselineskip}
+\afterintro
 
 
 \section{Project Source Structure}
@@ -623,14 +623,14 @@ the C types which \Eol* exposes to the Lua VM (\vref{sec:eol-mod-typemeta}).
   \label{sec:eol-mod-typemeta}
 
 Metatables for the userdata types (\textsf{Library}, \textsf{Function},
-\textsf{CType}, and \textsf{Variable}) are created at the time when the \Eol*
+\textsf{CType}, and \textsf{Variable}) are created when the \Eol*
 module is loaded by the Lua VM, in the \verb|create_meta()| C function.
-Exactly one metatable for each type, and all the userdata values of the same
-type share the same metatable. All the metatables have some common entries:
+Exactly one metatable for each type is created, and all the userdata values of the same
+type share the same metatable. All metatables have some common entries:
 
 \begin{itemize}
 
-  \item A \verb|__gc| metamethod responsible for decreasing the reference
+  \item A \verb|__gc| metamethod, responsible for decreasing the reference
   count of the associated \textsf{Library}.
 
   \item A \verb|__tostring| metamethod, in order to provide a string
@@ -643,9 +643,9 @@ type share the same metatable. All the metatables have some common entries:
 \end{itemize}
 
 For each metatable, an array of \Mc|struct luaL_Reg| values is created. It
-contains list of metamethods and pointers to the C functions which implement
-them. The example for is for \textsf{Library}; the rest are omitted here
-because of the strong similarity:
+contains a list of metamethods and pointers to the C functions which implement
+them. The example below is for \textsf{Library}; the rest share a strong
+similarity:
 
 \begin{ccode}
 /* Methods for Library userdata. */
@@ -660,8 +660,9 @@ static const luaL_Reg library_methods[] = {
 
 Then, in the \verb|create_meta()| function, the metatable is created with the
 aid of the \verb|luaL_newmetatable()| utility function, which arranges for the
-metatable to be available for checking the types of an userdata value later on
-with the companion functions \verb|luaL_checkudata()| and \verb|luaL_testudata()|:
+metatable to be available for checking the types of a userdata value later on
+with the companion functions \verb|luaL_checkudata()| and
+\verb|luaL_testudata()|:
 
 \begin{ccode}
 static void
@@ -682,8 +683,8 @@ create_meta (lua_State *L) {
 The implementation of \verb|eol.load()| tries to avoid loading the same
 library more than once. If a library is loaded, its reference count is
 incremented, and the returned \textsf{Library} userdata contains a reference
-to the previously loaded library. To achieve this behavior while keeping the
-bookkeeping simple, the module maintains a linked list of loaded libraries.
+to the previously loaded library. To achieve this behavior while preserving
+reference bookkeeping simple, a linked list of loaded libraries is maintained.
 Each \verb|EolLibrary| \Mc|struct| contains a pointer to the \verb|next|
 library (which can be \Mc|NULL|):
 
@@ -703,27 +704,27 @@ The \verb|path| of libraries is used to determine if two libraries are the
 same. For this to work, the \verb|path| of a library, and the paths of
 libraries which are candidates to be loaded must must be in canonical form
 as returned by the \verb|realpath()|\footnote{\texttt{realpath()}
-canonicalizes a file path, it is part of the POSIX standard and include in
+canonicalizes a file path, it is part of the POSIX standard and included in
 most Unix-like systems.} function before comparing them.
 
 It would have been possible to use a hash table to map library paths
 (canonicalized) to their corresponding \verb|EolLibrary| \Mc|struct|, to
 determine in constant time whether a library is loaded, instead of the linear
-time required to check a linked list, but in on average programs use a number
-of libraries in the order of tens, and reading the DWARF sections which
-contain the index of available types and symbols is much more costly for any
-non trivial library. Therefore it was determined that the linked list solution
-would be more suitable, while avoiding the additional complexity of the hash
+time required to check a linked list. However, most programs use, on average,
+a number of libraries in the order of tens, and reading the DWARF sections
+which contain the index of available types and symbols is much more costly for
+any non trivial library. Therefore, it was determined that the linked list
+solution would suffice, while avoiding the additional complexity of the hash
 table.
 
 
 \subsection{Type Information Lookup}
 
 Looking up type information is one of the most common operations performed by
-\Eol*. As per the design (\ref{sec:design-overview}), type information is to
-be stored in the \textsf{Type Cache} (for details of its implementation, see
-\ref{sec:impl-type-cache}). It seemed convenient to provide a single entry
-point for all the type information lookups which always checks the
+\Eol*. As per the design (\autoref{sec:design-overview}), type information is
+to be stored in the \textsf{Type Cache} (for details of its implementation,
+see \autoref{sec:impl-type-cache}). It seemed convenient to provide a single
+entry point for all the type information lookups which always checks the
 \textsf{Type Cache}. This function is \verb|library_lookup_type()|:
 
 \begin{ccode}
@@ -759,12 +760,12 @@ of the C standard library, starting from an empty cache:
       width=0.85\textwidth,
       height=0.5\textwidth,
       style={/pgf/number format/assume math mode=true},
-      xlabel={\emph{time$\rightarrow$}},
-      ylabel={\emph{hits / misses}},
+      % xlabel={\emph{time$\rightarrow$}},
+      % ylabel={\emph{hits / misses}},
       enlarge x limits=0.05,
       axis on top,
       tick align=inside,
-      axis x line*=bottom,
+      axis x line=none,
       axis y line*=right,
       legend style={legend pos=north west},
       x tick label style={opacity=0},
@@ -780,7 +781,7 @@ of the C standard library, starting from an empty cache:
       \legend{hits \\ misses \\}
     \end{axis}
   \end{tikzpicture}
-  \caption{Typical progression of type cache hits / misses}
+  \caption{Typical progression of type cache hits/misses over time}
   \label{fig:plot-type-cache-hitmiss}
 \end{figure}
 
@@ -838,13 +839,13 @@ eol_typeof (lua_State *L) {
 }
 \end{ccode}
 
-Functions \verb|eol.sizeof()|, \verb|eol.alignof|, and \verb|eol.offsetof| are
-all implemented similary, with the exception that they omit the code to look
-up the type information when passing a string argument. Once the corresponding
-\verb|EolTypeInfo| is found, it can be queried for the requested information:
-\verb|eol_typeinfo_sizeof()| to obtain the size,
-\verb|eol_typeinfo_alignment()| for the alignment, and for obtaining the offset
-of a \Mc|struct| member, the information is available in the
+Functions \verb|eol.sizeof()|, \verb|eol.alignof()|, and \verb|eol.offsetof()|
+are implemented similarly, with the exception that they omit the code to
+look up the type information when passing a string argument. Once the
+corresponding \verb|EolTypeInfo| is found, it can be queried for the requested
+information: \verb|eol_typeinfo_sizeof()| to obtain the size,
+\verb|eol_typeinfo_alignment()| for the alignment, and for obtaining the
+offset of a \Mc|struct| member, the information is available in the
 \verb|EolTypeInfoMember| value returned by the
 \verb|eol_typeinfo_compound_named_member()|.
 

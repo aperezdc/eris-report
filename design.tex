@@ -31,10 +31,10 @@ which describes well the purpose of the developed solution.
 
 The main components of \Eol* are shown in \autoref{fig:eol-architecture}.
 
-The design of the system revolves around the \textsf{Type Information}: it
+The design of the system revolves around \textsf{Type Information}: it
 describes native types in detail, and it is used by all the other components
 in different ways to provide their functionality. Its importance should not be
-surprising, because the ultimate goal of \Eol* is allowing seamless invocation
+surprising, because the ultimate goal of \Eol* is to allow seamless invocation
 of native functions which, being close to the bare metal, always conform to
 strict \gls{ABI} specifications. While starting execution of a native function
 is as simple as generating a jump machine instruction to its start address in
@@ -115,13 +115,14 @@ specified in \autoref{sec:design-lua-api}):
 	native type, and for creating native values of the represented native type
 	from Lua. The types available to C programs are supported, hence the name.
 
-	\item \textsf{Variable} represents a variable from a library. It is
-		responsible for allowing reading and writing its value from Lua,
-		performing conversions as needed.
+	\item \textsf{Function} (\autoref{sec:eol-api-function-t}) represents a
+		fragment of native code contained in a library, which can be invoked as
+		a function. It is responsible for performing calls into native code
+		from Lua.
 
-	\item \textsf{Function} represents a fragment of native code contained in a
-		library, which can be invoked as a function. It is responsible for
-		performing calls into native code from Lua.
+	\item \textsf{Variable} (\autoref{sec:eol-api-variable-t}) represents a
+		variable from a library. It is responsible for allowing reading and
+		writing its value from Lua, performing conversions as needed.
 
 \end{itemize}
 
@@ -140,15 +141,16 @@ instead.
 \section{Interaction With the Lua GC}
 	\label{sec:design-gc-interaction}
 
-Userdata values are subject to the Lua \gls{GC} (c.f.
+Userdata values are subject to Lua's \gls{GC} (c.f.
 \autoref{sec:userdata-lua-custom-allocator}), which poses a problem for the
 \textsf{Library} userdata: if the Lua VM does not keep an active reference to
-a \textsf{Library} value, the GC will consider it to be garbage, and
+a \textsf{Library} value, the GC will consider it to be garbage, and will
 deallocate it while it may be still referenced by other resources. In
-particular, library cannot be unloaded while there is any \textsf{CType},
-\textsf{Function}, or \textsf{Variable} userdata which belong to the library
-being used from Lua. This kind of situation can be triggered by the following
-simple sequence of events, illustrated by \autoref{lst:library-gc-issue}:
+particular, a \textsf{Library} cannot be unloaded while there is any
+\textsf{CType}, \textsf{Function}, or \textsf{Variable} userdata which belong
+to the library being used from Lua. This kind of situation can be triggered by
+the following simple sequence of events, illustrated by
+\autoref{lst:library-gc-issue}:
 
 \begin{listing}[ht]
 	\begin{luacode}
@@ -215,7 +217,7 @@ eol = require("eol")
 \end{luacode}
 
 Unless started otherwise, in the specification of the functions summarized in
-\autoref{tab:eol-api-functions-summary}, parameters named \texttt{typevalue}
+\autoref{tab:eol-api-functions-summary} parameters named \texttt{typevalue}
 accept both a \textsf{CType} values, or \textsf{Variable} values, in which
 case the type associated with the variable will be used. Also, functions can
 generate Lua errors when the types of values passed to them are incorrect.
@@ -298,7 +300,6 @@ using \texttt{RTLD\_GLOBAL}, and \texttt{RTLD\_LOCAL} when
 \texttt{dlopen()}~\cite{opengroup-dlopen} is used to load a shared object file,
 respectively.
 
-
 \subsubsection{Function \texttt{eol.type}}
 	\label{sec:eol-api-type}
 
@@ -306,9 +307,10 @@ respectively.
 typeinfo = eol.type(library, name)
 \end{luacode}
 
-Obtains the information for a type of a given \texttt{name}, contained in
-a \texttt{library}. The result is returned as a \textsf{CType} userdata. If
-the type is not found in the library, \Mlua|nil| is returned instead.
+Obtains the information for a type of a given \texttt{name},
+contained in a \texttt{library}. The result is returned as a \textsf{CType}
+userdata. If the type is not found in the library, \Mlua|nil| is returned
+instead.
 
 
 \subsubsection{Function \texttt{eol.typeof}}
@@ -341,7 +343,7 @@ a \textsf{CType} userdata, the size returned corresponds to the size of values
 of the type. If the size is not known (e.g. for \Mc|void|, or functions),
 \Mlua|nil| is returned instead.
 
-For any other values, an error is 
+For any other values, an error is raised.
 
 \subsubsection{Function \texttt{eol.alignof}}
 	\label{sec:eol-api-alignof}
@@ -500,7 +502,7 @@ it represents, by means of its \texttt{\_\_call} metamethod. Invoking
 a \value{CType} as a constructor accepts an optional parameter: if supplied,
 an array of \texttt{n} elements is created; otherwise a single element is
 created. The memory used to store the value is initialized by filling it with
-zero (\texttt{'\\0'}) bytes.
+zeroes (\texttt{0x00}).
 
 All the values created this way are subject to \gls{GC}, as specified in
 \autoref{sec:design-gc-interaction}.
@@ -582,6 +584,34 @@ Uses \texttt{typeinfo} as base type to construct a new \textsf{CType} userdata
 value which represents an array of \texttt{n} elements of the base type.
 
 
+\subsection{Function userdata}
+	\label{sec:eol-api-function-t}
+
+Userdata values of type \textsf{Function} represent any piece of native code
+from a \textsf{Library} which can be invoked transparently from Lua.
+
+Information about a \textsf{Function} can be obtained by indexing the userdata
+(by means of an \texttt{\_\_index} metamethod) with the keys detailed in
+\autoref{tab:eol-api-function-keys}.
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{lp{0.7\textwidth}}
+		\toprule
+		Key & Description \\
+		\midrule
+		\texttt{\_\_name} & Name of the function, as a string. \\
+		\texttt{\_\_type} & Type of the return value, as a \textsf{CType}
+			userdata, or \Mlua|nil| if the function does not return a value. \\
+		\texttt{\_\_library} & Library which contains the function, as a
+			\textsf{Library} userdata. \\
+		\bottomrule
+	\end{tabular}
+	\caption{Keys available in \textsf{Function} userdata}
+	\label{tab:eol-api-function-keys}
+\end{table}
+
+
 \subsection{Variable userdata}
 	\label{sec:eol-api-variable-t}
 
@@ -626,33 +656,6 @@ the number of elements in the array.
 	\label{tab:eol-api-variable-keys}
 \end{table}
 
-
-\subsection{Function userdata}
-	\label{sec:eol-api-function-t}
-
-Userdata values of type \textsf{Function} represent any piece of native code
-from a \textsf{Library} which can be invoked transparently from Lua.
-
-Information about a \textsf{Function} can be obtained by indexing the userdata
-(by means of an \texttt{\_\_index} metamethod) with the keys detailed in
-\autoref{tab:eol-api-function-keys}.
-
-\begin{table}[ht]
-	\centering
-	\begin{tabular}{lp{0.7\textwidth}}
-		\toprule
-		Key & Description \\
-		\midrule
-		\texttt{\_\_name} & Name of the function, as a string. \\
-		\texttt{\_\_type} & Type of the return value, as a \textsf{CType}
-			userdata, or \Mlua|nil| if the function does not return a value. \\
-		\texttt{\_\_library} & Library which contains the function, as a
-			\textsf{Library} userdata. \\
-		\bottomrule
-	\end{tabular}
-	\caption{Keys available in \textsf{Function} userdata}
-	\label{tab:eol-api-function-keys}
-\end{table}
 
 
 \subsubsection{Type information}

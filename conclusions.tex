@@ -1,4 +1,4 @@
-% vim: set ft=tex foldlevel=2 spelllang=en:
+% vim: set ft=tex foldlevel=2 spelllang=en spell:
 \cleardoublepage
 \setchaptertoc
 % TODO: Shouldn't this be "Final remarks" or so?
@@ -12,18 +12,18 @@ whether the planning schedule was followed through, and the future of \Eol*.
 \section{Achieved Goals}
 
 We consider that the main goals set at the beginning of this project
-(\autoref{sec:project-goals}) have been fullfilled. In particular:
+(\autoref{sec:project-goals}) have been fulfilled. In particular:
 
 \begin{itemize}
 
 	\item Development of an automatic binding system for the Lua programming
 	language, allowing seamless usage of C libraries.
 
-	\item Use the DWARF debugging information contained in ELF shared object
+	\item Use of the DWARF debugging information contained in ELF shared object
 	files to pinpoint the details about invoked functions, and involved data
 	types.
 
-	\item Convertsion of data values transparently between Lua and C.
+	\item Conversion of data values transparently between Lua and C.
 
 	\item Reference implementation for GNU/Linux running on the
 	x86\_86 architecture.
@@ -36,12 +36,23 @@ We consider that the main goals set at the beginning of this project
 The aforementioned achievements take the shape of the \Eol* system, developed
 in the C programming language. \Eol* is a Lua module which implements a FFI
 for Lua using the DWARF debugging information to gain knowledge about the
-types and functions available in ELF shared object files. Separating the code
-which deals with native function invocation allows us to select select which
-method is used to invoke native functions from Lua at build-time. Two backends
-were implemented: one using \verb|libffi|, and a second one using JIT
-compilation (by means of DynASM) for the Intel x86\_64 architecture to
-generate the needed glue code.
+types and functions available in ELF shared object files.
+
+The source code has been publicly available~\cite{eol-github} under the terms
+of the \gls{OSI}-approved MIT license since the very moment the development
+effort was started, and so the code repository contains the complete history
+of changes it has received so far. The MIT license was chosen because most
+Lua-related projects use either the BSD or MIT license, and using a compatible
+license allows developers to mix \Eol* with other Lua modules. Also, referring
+to the MIT license clearer because it avoids the potential confusion derived
+from the existence of different variants of the BSD
+license~\cite{bsd-licenses}.
+
+Separating the code which deals with native function invocation allows us to
+select select which method is used to invoke native functions from Lua at
+build-time. Two backends were implemented: one using \verb|libffi|, and
+a second one using JIT compilation (by means of DynASM) for the Intel x86\_64
+architecture to generate the needed glue code.
 
 Additionally, a test harness for Lua has been developed, due to the existing
 Lua unit testing frameworks aborting their execution in the event of a crash
@@ -49,7 +60,7 @@ of the process. The harness has been implemented mostly in Lua, plus a small
 helper module written in C to access Unix system calls which are not covered
 by the Lua standard library.
 
-The implementation of \Eol* consists of approximately 7.000\todo{Update
+The implementation of \Eol* consists of approximately 7.000 \todo{Update
 numbers later if needed} lines of code (standard LOC, ignoring comments, see
 \autoref{fig:eol-loc}), of which the biggest part is the implementation of the
 \Eol* Lua module, as expected.
@@ -99,8 +110,6 @@ ways:
 	stress the FFI in the way it is intended to be used.
 
 \end{itemize}
-
-
 
 \section{Lessons Learned}
 
@@ -162,17 +171,18 @@ with the multiple causes of delays:
 \begin{itemize}
 
 	\item The main deviation, filed under \emph{Documentation}, was caused
-	because the effort was underestimated by a wide margin. The estimation was
-	overly optimistic, and while for someone used to do documentation work in
-	a regular basis it might have been an adequate estimation, that was not
-	the case for the author. Plus, there was the added difficulty of writing
-	the documentation in English: while fluent using it in a daily basis, the
-	author is not a native speaker and lacked experience in writing long-form
-	technical documentation in it.
+	because the effort of writing the final report was underestimated by
+	a wide margin. The estimation was overly optimistic, and while for someone
+	used to do documentation work in a regular basis it might have been an
+	adequate estimation, that was not the case for the author. Plus, there was
+	the added difficulty of writing the documentation in English: while
+	capable of its fluent use it in a daily basis, the author is not a native
+	speaker and lacked experience in writing long-form technical documentation
+	in it.
 
 	\item The additional time needed for the \emph{Analysis} was motivated by
 	the need of reading complex normative documentation, mainly the
-	specifications of the \gls{ELF} and \gls{DWARF} standards, which weigh
+	specifications of the \gls{ELF} and \gls{DWARF} standards, which weight
 	over 320 and 100 pages, respectively. Even though not the whole text of
 	the specifications was relevant for the present project, it was needed to
 	wade through them to acquire concepts which then allowed to understand the
@@ -181,10 +191,10 @@ with the multiple causes of delays:
 	\item As for the \emph{Development} phase, it took a good amount of
 	unplanned time to understand how use DynASM for JIT code generation due to
 	the utter lack of documentation, which required frequent detours to read
-	parts of its source code. The most complete resource on DynASM
-	~\cite{unofficial-dasm-doc} was written by a third party, it is not part
-	of official documentation, and it was found when the most of deviation had
-	been already done.
+	parts of its source code. The most complete resource on
+	DynASM~\cite{unofficial-dasm-doc} was written by a third party, it is not
+	part of official documentation, and it was found when the most of the
+	deviation had already taken place.
 
 \end{itemize}
 
@@ -254,16 +264,16 @@ a moderate effort, and would certainly provide added value to the project:
 
 \begin{itemize}
 
-	\item Building a community around \Eol* is already Free Software, it lacks
-	a community, and it would be interesting to foster a healthy community
-	around the project. That would require writing more documentation (e.g.
-	a quick start tutorial, a walkthough of the features), and having public
+	\item Building a community. \Eol* is already Free Software, it lacks
+	a community, and it would be interesting to foster a healthy one around
+	the project. That would require writing more documentation (e.g. a quick
+	start tutorial, a walkthough of the features), and having public
 	communication channels (e.g. a mailing list, an \gls{IRC} chat room,
 	participating in the \verb|lua-l| list...).
 
-	\item Ensuring the compatibility of \Eol* works Lua 5.2, and 5.1. Those
-	are the versions more widely deployed\todo{See if it's possible to add
-	a citation}.
+	\item Ensuring compatibility. Making sure that \Eol* works with Lua 5.2,
+	and	5.1 would favour maximum adoption, since those are the versions more
+	widely deployed.\todo{See if it's possible to add a citation}
 
 	\item Enabling use of \Eol* with LuaJIT. Most modules using the Lua C API
 	can be built for LuaJIT as well. LuaJIT is designed to be compatible with
