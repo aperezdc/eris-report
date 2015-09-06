@@ -56,7 +56,36 @@
 \providecommand*{\subsectionautorefname}{Subsection}
 \usepackage[open]{bookmark}
 \bookmarksetup{color=blue}
-% \usepackage{minitoc}
+
+\usepackage[nohints]{minitoc}
+\mtcsetrules{minitoc}{off}
+\newcommand{\dochaptertoc}{%
+  % \vspace{1.85\baselineskip} % workaround for removed rule
+  % \smash{\makebox[\linewidth]{\hrulefill}} % workaround for removed rule
+  % \vspace{-1.85\baselineskip} % workaround for removed rule
+  \minitoc
+  % \vspace{-1.15\baselineskip} % workaround for removed rule
+  % \smash{\makebox[\linewidth]{\hrulefill}} % workaround for removed rule
+  % \vspace{1.15\baselineskip} % workaround for removed rule
+}
+\newcommand{\setchaptertoc}{%
+  \setchapterpreamble{% KOMA-Script command
+    \dochaptertoc%
+  }}
+\newcommand\beforeintro{%
+  %\vspace{0.35\baselineskip}%
+  \begin{center}%
+    \Large\Symbol{🙠}%
+  \end{center}%
+}
+\newcommand\afterintro{%
+  \begin{center}%
+	\Large\Symbol{🙣}%
+  \end{center}%
+  %\vspace{0.5\baselineskip}%
+}
+
+
 \usepackage[acronym,xindy,toc]{glossaries}
 \makeglossaries
 \glossarystyle{altlistgroup}
@@ -104,6 +133,12 @@
   BoldFont       = *-Regular,
   BoldItalicFont = *-Italic,
 ]
+
+\newfontfamily\SymbolaFont{Symbola}[
+	Path          = fonts/,
+	Extension     = .ttf,
+]
+\newcommand\Symbol[1]{{\SymbolaFont#1}}
 
 
 \usepackage{setspace}
@@ -183,7 +218,7 @@ Laura Milagros Castro Souto\relax}
 \setlength{\parskip}{2ex plus 1ex minus 1ex}
 
 \begin{document}
-% \dominitoc
+\dominitoc
 \pagestyle{empty}
 
 \begin{titlepage}
