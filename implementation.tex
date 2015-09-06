@@ -329,6 +329,7 @@ by keeping a pointer to the \Mc|EolTypeInfo| that is read-only.
 
 
 \section{Type cache}
+  \label{sec:impl-type-cache}
 
 The type cache is implemented as an opaque data structure which can only be
 used by means of its public API (\autoref{lst:eol-typecache-api}). Internally
@@ -670,11 +671,137 @@ create_meta (lua_State *L) {
 
 \subsection{Library loading}
 
-  \verb|eol_load| \todo{Write}
+The implementation of \verb|eol.load()| tries to avoid loading the same
+library more than once. If a library is loaded, its reference count is
+incremented, and the returned \textsf{Library} userdata contains a reference
+to the previously loaded library. To achieve this behavior while keeping the
+bookkeeping simple, the module maintains a linked list of loaded libraries.
+Each \verb|EolLibrary| \Mc|struct| contains a pointer to the \verb|next|
+library (which can be \Mc|NULL|):
+
+\begin{ccode}
+struct EolLibrary {
+  /* Members used for bookkeeping */
+  unsigned int       ref_counter;
+  const char        *path;
+  struct EolLibrary *next;
+
+  /* Other members */
+  /* ... */
+};
+\end{ccode}
+
+The \verb|path| of libraries is used to determine if two libraries are the
+same. For this to work, the \verb|path| of a library, and the paths of
+libraries which are candidates to be loaded must must be in canonical form
+as returned by the \verb|realpath()|\footnote{\texttt{realpath()}
+canonicalizes a file path, it is part of the POSIX standard and include in
+most Unix-like systems.} function before comparing them.
+
+It would have been possible to use a hash table to map library paths
+(canonicalized) to their corresponding \verb|EolLibrary| \Mc|struct|, to
+determine in constant time whether a library is loaded, instead of the linear
+time required to check a linked list, but in on average programs use a number
+of libraries in the order of tens, and reading the DWARF sections which
+contain the index of available types and symbols is much more costly for any
+non trivial library. Therefore it was determined that the linked list solution
+would be more suitable, while avoiding the additional complexity of the hash
+table.
+
 
 \subsection{Type Information Lookup}
 
-  \verb|eol_type| \todo{Write}
+Looking up type information is one of the most common operations performed by
+\Eol*. As per the design (\ref{sec:design-overview}), type information is to
+be stored in the \textsf{Type Cache} (for details of its implementation, see
+\ref{sec:impl-type-cache}). It seemed convenient to provide a single entry
+point for all the type information lookups which always checks the
+\textsf{Type Cache}. This function is \verb|library_lookup_type()|:
+
+\begin{ccode}
+static const EolTypeInfo*
+library_lookup_type (EolLibrary  *library,
+                     Dwarf_Off    d_offset,
+                     Dwarf_Error *d_error) {
+    const EolTypeInfo *typeinfo =
+            eol_type_cache_lookup (&library->type_cache, d_offset);
+    if (!typeinfo) {
+        typeinfo = library_build_typeinfo (library, d_offset, d_error);
+        eol_type_cache_add (&library->type_cache, d_offset, typeinfo);
+    }
+    return typeinfo;
+}
+\end{ccode}
+
+It is important to note that the cache is always checked first: on a cache
+hit, the cached values are returned immediately, while in the event of a cache
+miss a call to the \verb|library_build_typeinfo()| is used to create a new
+\verb|EolTypeInfo| from the DWARF debugging information, which is always added
+to the cache \emph{right away}. This is especially important because
+\verb|EolTypeInfo| values can contain references to others, which in turn
+cause additional type information lookups. Having the intermediate values
+built also added in the cache greatly increases the ratio of cache hits. To
+better understand this, consider the following example lookups for functions
+of the C standard library, starting from an empty cache:
+
+\begin{figure}[thH]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=0.85\textwidth,
+      height=0.5\textwidth,
+      style={/pgf/number format/assume math mode=true},
+      xlabel={\emph{time$\rightarrow$}},
+      ylabel={\emph{hits / misses}},
+      enlarge x limits=0.05,
+      axis on top,
+      tick align=inside,
+      axis x line*=bottom,
+      axis y line*=right,
+      legend style={legend pos=north west},
+      x tick label style={opacity=0},
+    ]
+      \addplot plot coordinates {
+        (1,0) (2,7) (3,8) (4,9) (5,9) (6,11) (7,13) (8,13) (9,154) (10,155)
+        (11,158) (12,165) (13,168) (14,170) (15,171)
+      };
+      \addplot plot coordinates {
+        (1,0) (2,7) (3,14) (4,14) (5,18) (6,18) (7,18) (8,19) (9,107)
+        (10,107) (11,107) (12,107) (13,107) (14,107) (15,107)
+      };
+      \legend{hits \\ misses \\}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Typical progression of type cache hits / misses}
+  \label{fig:plot-type-cache-hitmiss}
+\end{figure}
+
+\begin{enumerate}
+
+  \item Lookup type information for the \Mc|int atoi(const char*)| function.
+  This generates one lookup for the \Mc|int| return type, plus another lookup
+  for the \Mc|const char*| parameter. The latter causes itself more lookups:
+  one for the \Mc|char*| type, which itself causes yet another lookup for the
+  \Mc|char| type. The type information for \Mc|char| gets added to the
+  cache at this point, then the information for \Mc|char*|, and finally for
+  \Mc|const char*|.
+
+  \item Lookup type information for the \Mc|char* strchr(const char*, int)|
+  function. The cache already contains the type information for the function
+  parameters, which were looked up for the \Mc|atoi()| function. The type
+  information for the return type, \Mc|char*|, is already in the cache,
+  because it has been added as a partial result for the \Mc|atoi()|
+  function. As for the parameter types, \Mc|const char*| is also
+  in the cache.
+
+\end{enumerate}
+
+The implemented policy for type information lookup quickly fills up the cache
+as fast as possible while the program starts, up to a point where most of the
+types used are all present in the cache
+(\autoref{fig:plot-type-cache-hitmiss}), and from that moment onwards the
+amount of cache misses is very small. 
+
 
 \subsection{Querying Types}
 
@@ -715,7 +842,24 @@ of a \Mc|struct| member, the information is available in the
 
 \subsection{Casting}
 
-  \verb|eol_cast|
+Using the \verb|eol.cast()| function on a \textsf{Variable} userdata changes
+the associated type for it, effectively treating the same data as if it were
+of another type. In order to achieve this, we just return to Lua a new
+\textsf{Variable} userdata with the given type information which points to
+the same memory area:
+
+\begin{ccode}
+static int
+eol_cast (lua_State *L) {
+  const EolTypeInfo *typeinfo = to_eol_typeinfo (L, 1);
+  EolVariable *ev = to_eol_variable (L, 2);
+
+  /* Use typeinfo from 2nd argument, same data address. */
+  variable_push_userdata (L, ev->library, typeinfo,
+    ev->address, ev->name, VARIABLE_NOCOPY);
+  return 1;
+}
+\end{ccode}
 
 
 \subsection{Preprocessor “Generator Macros”}
