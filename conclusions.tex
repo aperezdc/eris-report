@@ -153,6 +153,63 @@ conventions during the development of the JIT code generator.
 
 \section{Planning Results}
 
+The planning done \emph{a priori} (\autoref{sec:plan-method}) resulted in a
+tight schedule which did not include enough clearance for anything else than
+the smallest of the unexpected delays (c.f \autoref{tab:sched-postmortem}).
+In hindsight, it would have been good to schedule additional time to cope
+with the multiple causes of delays:
+
+\begin{itemize}
+
+	\item The main deviation, filed under \emph{Documentation}, was caused
+	because the effort was underestimated by a wide margin. The estimation was
+	overly optimistic, and while for someone used to do documentation work in
+	a regular basis it might have been an adequate estimation, that was not
+	the case for the author. Plus, there was the added difficulty of writing
+	the documentation in English: while fluent using it in a daily basis, the
+	author is not a native speaker and lacked experience in writing long-form
+	technical documentation in it.
+
+	\item The additional time needed for the \emph{Analysis} was motivated by
+	the need of reading complex normative documentation, mainly the
+	specifications of the \gls{ELF} and \gls{DWARF} standards, which weigh
+	over 320 and 100 pages, respectively. Even though not the whole text of
+	the specifications was relevant for the present project, it was needed to
+	wade through them to acquire concepts which then allowed to understand the
+	rest.
+
+	\item As for the \emph{Development} phase, it took a good amount of
+	unplanned time to understand how use DynASM for JIT code generation due to
+	the utter lack of documentation, which required frequent detours to read
+	parts of its source code. The most complete resource on DynASM
+	~\cite{unofficial-dasm-doc} was written by a third party, it is not part
+	of official documentation, and it was found when the most of deviation had
+	been already done.
+
+\end{itemize}
+
+\begin{table}[t]
+	\centering
+	\begin{tabular}{rlrr}
+		\toprule
+		\# & Task & Estimation & Actual \\
+		\midrule
+		1. & Initial study     & 10 &  5 \\
+		2. & Analysis          & 15 & 23 \\
+		3. & Development       & 50 & 80 \\
+		4. & Validation        & 10 &  8 \\
+		5. & Documentation     & 30 & 78 \\
+		\midrule
+		  & \emph{Total}      & 115 & 194\\
+		\bottomrule
+	\end{tabular}
+	\caption{Estimated vs. actual schedule (in hours)}
+	\label{tab:sched-postmortem}
+\end{table}
+
+On the other side of the spectrum, the \emph{Initial study} was carried out
+faster than planned: the preexisting knowledge about Lua, LuaJIT, and the
+existing solutions to use native libraries with them was a valuable asset.
 
 
 \section{Future Directions}
@@ -192,6 +249,7 @@ new possibilities:
 
 The following fall into the category of improvements which can be done with
 a moderate effort, and would certainly provide added value to the project:
+
 
 \begin{itemize}
 
