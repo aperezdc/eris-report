@@ -709,4 +709,171 @@ native code involves:
 \end{enumerate}
 
 
+\section{Testing}
+	\label{sec:design-testing}
+
+The test harness should be usable as well for regression testing, so it should
+exercise the implementation using the \Eol* module API
+(\autoref{sec:design-lua-api}) and not depend on knowledge about the internals
+of the implementation.
+
+One challenge for the test harness is that programming errors in the system
+may cause the entire process to hang, or crash: the \Eol* Lua module is
+implemented in C, and therefore all the caveats of running and testing native
+code apply.
+
+A number of third party unit testing frameworks exist for Lua, but evaluating
+them showed that none of them satisfies our requisites:
+
+\begin{itemize}
+
+	\item Compatibility with Lua 5.3, which is the Lua version used as target.
+		Many of the testing frameworks only support older versions only, and
+		\texttt{lunit}\footnote{\url{http://www.mroth.net/lunit/}},
+		Lunity\footnote{\url{https://github.com/Phrogz/Lunity}},
+		Lunatest\footnote{\url{https://github.com/silentbicycle/lunatest}},
+		LuaUnit\footnote{\url{https://github.com/bluebird75/luaunit}},
+		Shake\footnote{\url{http://shake.luaforge.net/}},
+		BTDLua\footnote{\url{http://users.skynet.be/adrias/Lua/BTDLua/}},
+		Luaspec\footnote{\url{https://github.com/mirven/luaspec/}},
+		Telescope\footnote{\url{https://github.com/norman/telescope/}}, and
+		Gambiarra\footnote{\url{https://bitbucket.org/zserge/gambiarra}} were
+		discarded because of that.
+
+	\item Ability to handle gracefully crashes of the process running the Lua
+		VM. Many testing frameworks for Lua focus on testing Lua code, and do not
+		handle crashes in native code gracefully. Because of this,
+		\texttt{lunitx}\footnote{\url{https://github.com/dcurrie/lunit}},
+		Testy\footnote{\url{https://github.com/siffiejoe/lua-testy}},
+		Busted\footnote{\url{http://olivinelabs.com/busted/}}, and
+		TestMore\footnote{\url{http://fperrad.github.io/lua-TestMore/}}
+		were discarded.
+
+\end{itemize}
+
+Because of the impossibility if reusing an existing testing framework, it is
+needed to implement our own design, which revolves around the requirement of
+gracefully handling crashes in native code.
+
+\minisec{Unit Test Isolation}
+
+The best way of ensuring that the test harness can continue running in the
+event of a crash is to run each unit test in a new process, with a fresh Lua
+VM. This motivates each unit tests to be stored in its own Lua script. This
+way it is possible for the test harness to run as a separate process, which in
+turns executes a new process for each unit test, which can crash safely
+without affecting the test harness.
+
+\minisec{Test Assertions}
+
+On top of the standard \Mlua|assert()| function provided by Lua, the test
+harness additionally provides the assertions listed in
+\autoref{tab:design-test-asserts}, to be used in unit tests.
+
+\begin{table}[htH]
+	\centering
+	\begin{tabular}{lp{0.6\textwidth}}
+	\toprule
+	Function & Description \\
+	\midrule
+		\verb|assert.False(value)| &
+			Checks that \texttt{value} is \verb|false| \\
+		\verb|assert.True(value)| &
+			Checks that \texttt{value} is \verb|true| \\
+		\verb|assert.Falsey(value)| &
+			Checks that \texttt{value} is \verb|false| or \Mlua|nil| \\
+		\verb|assert.Truthy(value)| &
+			Checks that \texttt{value} evaluates to a non-falsey value (any value
+			except \verb|false| or \Mlua|nil|) \\
+		\verb|assert.Error(f)| &
+			Checks whether invoking function \texttt{f} raises a Lua error \\
+		\verb|assert.Callable(value)| &
+			Checks whether \texttt{value} is a function or has a \texttt{\_\_call}
+			metamethod which allows to treat it as a function \\
+		\verb|assert.Field(obj, name)| &
+			Checks whether an \texttt{obj}ect is indexable and contains a field with
+			the given \texttt{name} \\
+		\verb|assert.Userdata(value, T)| &
+			Checks whether a \texttt{value} is an userdata of type \texttt{T} \\
+		\verb|assert.Equal(a, b)| &
+			Checks whether two values \texttt{a} and \texttt{b} are equal \\
+		\verb|assert.Match(re, str)| &
+			Checks whether a \texttt{str}ing matches a particular \texttt{re}gular
+			expression. \\
+	\bottomrule
+	\end{tabular}
+	\caption{Additional assertions provided by the test harness}
+	\label{tab:design-test-asserts}
+\end{table}
+
+The checks performed by the assertions can be reversed by indexing the
+\verb|assert| object with the \verb|Not| key, and using the result to invoke
+the negated assertion. As complex as it may sound, this is easily exemplified:
+
+\begin{luacode}
+assert.Equal(2, 1+1)     -- Normal assertion
+assert.Not.Equal(nil, 2) -- Negated assertion
+\end{luacode}
+
+\minisec{Test Names}
+
+In order to allow specifying which test (or tests) from the corpus of unit tests
+are to be run, we need a way to refer to them by name. Provided that each unit
+test is contained in a file, the file name without the \verb|.lua| suffix is
+used as the name unit tests.
+
+\minisec{Overview}
+
+The components of the test runner are shown in \autoref{fig:design-harness}.
+
+\begin{figure}[th]
+	\centering
+	\begin{tikzpicture}[node distance=2cm]
+		\node[component] (test) {Test};
+		\node[component] (runner) [right=1cm of test] {Runner};
+		\node[component] (baseout) [right=1cm of runner] {Output};
+		\node[component, below] (tapout) [below of=baseout, xshift=-19mm] {TAP Output};
+		\node[component, below] (conout) [right=1cm of tapout] {Console Output};
+
+		\node[datain] (t1) [below of=test] {\texttt{test1.lua}};
+		\node[datain] (t2) [below of=t1, node distance=1.1\baselineskip]
+			{\texttt{test2.lua}};
+		\node[datain] (tt) [below of=t2, node distance=1.1\baselineskip] {...};
+		\node (ttlabel) [below of=tt, node distance=1.5\baselineskip]
+			{Unit Test Scripts};
+
+		\path[uses] (runner.east) -- (baseout.west);
+
+		\path[uses, solid] (tapout.east) -| (baseout.south);
+		\path[uses, solid] (conout.west) -| (baseout.south);
+
+		\path[contains] (runner.west) -- (test.east);
+
+		\begin{pgfonlayer}{background}
+			\node[datablob] (tests) [fit=(t1) (t2) (tt) (ttlabel), drop shadow] {};
+		\end{pgfonlayer}
+
+		\path[datain, dashed, thick] (tests.north) -- (test.south);
+	\end{tikzpicture}
+	\caption{Architecture of the test runner}
+	\label{fig:design-harness}
+\end{figure}
+
+Each unit test, which is ultimately a Lua script in the file system, is
+modelled by a \textsf{Test}, which is responsible for executing its
+corresponding Lua script in a new process and determining whether the
+execution of the unit test succeeded, failed, or crashed.
+
+The \textsf{Runner} manages a collection of \textsf{Test}, and is responsible
+for triggering their execution, keeping statistics about the test process
+(total number of tests, amount of failed tests, and so on), and reporting
+status and results to an \textsf{Output}.
+
+An \textsf{Output} is responsible of reporting the status and results of
+the execution of the unit tests to the user. Its interface is abstract, and
+two concrete implementations are to be initially provided: \textsf{Console
+Output} produces textual output suitable for display in a Unix color terminal
+(DEC VT420 or compatible i.e. XTerm), while \textsf{TAP Output} writes the
+output in the \gls{TAP} format~\cite{tap-spec}.
+
 \beforeintro
