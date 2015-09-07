@@ -712,7 +712,8 @@ native code involves:
 \section{Testing}
 	\label{sec:design-testing}
 
-The test harness should be usable as well for regression testing, so it should
+We decided to use  a test harness for \Eol*. The test harness should be usable
+not only for unit testing, but also for regression testing, so it should
 exercise the implementation using the \Eol* module API
 (\autoref{sec:design-lua-api}) and not depend on knowledge about the internals
 of the implementation.
@@ -751,9 +752,9 @@ them showed that none of them satisfies our requisites:
 
 \end{itemize}
 
-Because of the impossibility if reusing an existing testing framework, it is
-needed to implement our own design, which revolves around the requirement of
-gracefully handling crashes in native code.
+Because of the impossibility of reusing an existing testing framework, we
+needed to implement our own test harness, which revolves around the
+requirement of gracefully handling crashes in native code.
 
 \minisec{Unit Test Isolation}
 
@@ -762,7 +763,7 @@ event of a crash is to run each unit test in a new process, with a fresh Lua
 VM. This motivates each unit tests to be stored in its own Lua script. This
 way it is possible for the test harness to run as a separate process, which in
 turns executes a new process for each unit test, which can crash safely
-without affecting the test harness.
+without affecting the test harness or the rest of the tests.
 
 \minisec{Test Assertions}
 
@@ -820,11 +821,11 @@ assert.Not.Equal(nil, 2) -- Negated assertion
 In order to allow specifying which test (or tests) from the corpus of unit tests
 are to be run, we need a way to refer to them by name. Provided that each unit
 test is contained in a file, the file name without the \verb|.lua| suffix is
-used as the name unit tests.
+used as the name the unit test.
 
-\minisec{Overview}
+\minisec{Test harness architecture}
 
-The components of the test runner are shown in \autoref{fig:design-harness}.
+The components of the test harness are shown in \autoref{fig:design-harness}.
 
 \begin{figure}[th]
 	\centering
@@ -854,26 +855,26 @@ The components of the test runner are shown in \autoref{fig:design-harness}.
 		\end{pgfonlayer}
 
 		\path[datain, dashed, thick] (tests.north) -- (test.south);
-	\end{tikzpicture}
-	\caption{Architecture of the test runner}
-	\label{fig:design-harness}
-\end{figure}
+		\end{tikzpicture} \caption{Architecture of the test harness}
+		\label{fig:design-harness} \end{figure}
 
 Each unit test, which is ultimately a Lua script in the file system, is
 modelled by a \textsf{Test}, which is responsible for executing its
 corresponding Lua script in a new process and determining whether the
 execution of the unit test succeeded, failed, or crashed.
 
-The \textsf{Runner} manages a collection of \textsf{Test}, and is responsible
-for triggering their execution, keeping statistics about the test process
-(total number of tests, amount of failed tests, and so on), and reporting
-status and results to an \textsf{Output}.
+The \textsf{Runner} is the main component of the harness. It manages
+a collection of \textsf{Test}, and is responsible for triggering their
+execution, keeping statistics about the test process (total number of tests,
+amount of failed tests, and so on), and reporting status and results to an
+\textsf{Output}.
 
-An \textsf{Output} is responsible of reporting the status and results of
-the execution of the unit tests to the user. Its interface is abstract, and
-two concrete implementations are to be initially provided: \textsf{Console
-Output} produces textual output suitable for display in a Unix color terminal
-(DEC VT420 or compatible i.e. XTerm), while \textsf{TAP Output} writes the
-output in the \gls{TAP} format~\cite{tap-spec}.
+An \textsf{Output} is responsible for reporting the status and results of the
+execution of the unit tests to the user. Its interface is abstract, and two
+concrete implementations are to be initially provided: \textsf{Console
+Output}, to  produce textual output suitable for display in a Unix color
+terminal (DEC VT420 or compatible i.e. XTerm), and \textsf{TAP Output}, to
+write the output in the \gls{TAP} format~\cite{tap-spec}. The latter, being
+a de facto standard, allows integration with third party tools.
 
 \beforeintro

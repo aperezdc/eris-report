@@ -2,6 +2,8 @@
 
 \setchaptertoc
 \chapter{Implementation}
+\clearpage
+% \enlargethispage{2\baselineskip}
 
 This chapter provides both guidance to browse the \Eol* source
 code~\cite{eol-github}, and insight into the details worth
@@ -949,5 +951,175 @@ bool eol_type_is_signed (EolType type) {
 }
 \end{ccode*}
 
+
+\section{Test Harness}
+
+The implementation of the test harness is not particularly complex, and its
+main piece of code is the test runner, contained in a single Lua script
+(\texttt{tools/harness.lua} in the source tree) which is mostly self
+explanatory. In broad terms, it works in the following way:
+
+\begin{enumerate}
+
+  \item The directory containing the unit tests, which are Lua scripts, is
+  scanned, and the file names used to populate the list of unit tests to run.
+
+  \item If the names of any tests have been given in the command line, the
+  lists os tests to run is changed to contain the names given as command line
+  arguments.
+
+  \item A \textsf{Test} object is created for each unit test of the list of
+  tests to run.
+
+  \item An \textsf{Output} is chosen, depending on the execution environment
+  and command line arguments. The \Mlua|Output:setup()| method is invoked.
+
+  \item For each \textsf{Test}, \Mlua|Output:start()| is called, the
+  \textsf{Test} executed, and \Mlua|Output:finish()| is called to report its
+  execution status.
+
+  \item After running the unit tests, before exiting, the \textsf{Output} is
+  give the chance of generating a summary of the test results (or any other
+  content it may consider neccessary) by calling \Mlua|Output:report()|.
+
+\end{enumerate}
+
+Running each test case in a new process is achieved using the
+\Mlua|io.popen()| function from the Lua standard library, which allows
+capturing the output of the process as well. A normal Lua interpreter is used
+to run each unit test.
+
+\begin{figure}[h]
+  \begin{luacode}
+local eol = require("eol")
+assert.Field(eol, "alignof")
+assert.Callable(eol.alignof)
+
+local libtest = eol.load("libtest")
+local u8type = eol.type(libtest, "uint8_t")
+
+assert.Equal(1, eol.alignof(u8type))
+assert.Equal(1, eol.alignof(libtest.var_u8))
+
+-- Values other than variables or typeinfos raise an error
+for _, value in ipairs { 1, 3.14, false, true, "str", { a=1 } } do
+	assert.Error(function ()
+		local _ = eol.alignof(value)
+	end)
+end
+  \end{luacode}
+  \caption{Unit test for the \texttt{eol.alignof()} function}
+  \label{lst:unittest-example}
+\end{figure}
+
+\subsection{\texttt{tools/run-tests}}
+
+The \verb|run-tests| helper script simplifies running the test harnes.
+In order to preload the implementation of the
+(\texttt{tools/harness-assertions.lua} in the source tree, specification in
+\autoref{tab:design-test-asserts}) the script defines the \verb|LUA_INIT|.
+It also makes sure that the correct \verb|lua| executable is used.
+
+
+\subsection{Helper C Module}
+
+The test runner needs access to a series of functions from the C standard
+library which are not available in Lua. Access to these functions is
+implemented as a loadable C module named \texttt{testutil} which contains
+trivial code for the following functions:
+
+\begin{itemize}
+
+  \item \verb|testutil.isatty()| is used to determine whether a console is
+  connected to the standard output of the test harness process. In that case,
+  the \textsf{Console Output} is used for output formatting, otherwise the
+  output is redirected to a pipe or a file, and the \textsf{TAP Output} is
+  selected instead.
+
+  \item \verb|testutil.listdir()| reads the directory at a given path, and
+  returns an array with the names of the files contained in it.
+
+  \item \verb|testutil.isfile()| and \verb|testutil.isdir()| check whether the
+  path passed to them is a regular file or a directory, respectively.
+  Internally they use the \verb|stat()| system call to obtain information
+  about the path.
+
+  \item \verb|testutil.realpath()| allows calling the POSIX \verb|realpath()|
+  function to canonicalize file system paths.
+
+  \item \verb|testutil.getcwd()| allows calling the \verb|getcwd()| function
+  from the C library to obtain the working directory of the test runner.
+
+\end{itemize}
+
+
+\section{Complete Test Programs}
+
+In order to stress the implementation of the \Eol* module, a few programs
+which feature code similar to that found in real world systems have been
+developed. The following libraries were chosen due to their size being small
+and easy to build with full DWARF debugging information, yet containing
+complex functions and types which would pose a challenge to \Eol*:
+
+\begin{itemize}
+
+  \item µPNG\footnote{\url{https://github.com/elanthis/upng}}: small library which
+  implements a \gls{PNG} image decoder. It is used in embedded devices with
+  constrained memory resources, like the Pebble Time smartwatch.
+
+  \item NanoVG\footnote{\url{https://github.com/memononen/nanovg}}: embedded
+  implementation of a subset of the OpenVG graphics API, which uses OpenGL for
+  rendering.
+
+  % \item cImgIU\footnote{\url{https://github.com/Extrawurst/cimgui/}}:
+  % graphical user interface library
+
+  \item GLFW\footnote{\url{http://www.glfw.org}}: utility library for OpenGL
+  application development which simplifies the creation of windows with OpenGL
+  contexts, and handling input from the user.
+ 
+\end{itemize}
+
+The programs are included in the \texttt{examples/} directory of the \Eol*
+source code:
+
+\begin{description}
+
+  \item [type-pp.lua] \hfill\\
+    Pretty-prints information about C types present in an arbitrary library.
+    This was implemented to exercise the ability of the \Eol* module to
+    provide precise type information to Lua programs.
+
+  \item [upng-info.lua] \hfill\\ Uses the µPNG library to show information
+  about \gls{PNG} images.
+
+  \item [nanovg-demo.lua, nanovg-noise.lua] \hfill\\
+    There two programs use the GLFW library to create a window with an OpenGL
+    context, and the NanoVG graphics library for rendering.
+
+    The first uses functions involving complex native
+    types being passed between Lua and C to paint a series of translucent
+    animated waves (\autoref{fig:nanovg-demo}). The second displays animated
+    random noise which is generated from Lua into a native memory buffer
+    that has been allocated by \Eol* and passed as a texture to the graphics
+    card using NanoVG.
+
+\end{description}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.75\textwidth]{img/nanovg-demo.png}
+  % \includegraphics[width=0.45\textwidth]{img/nanovg-noise.png}
+  \caption{Demo implemented in Lua of the NanoVG graphics library}
+  \label{fig:nanovg-demo}
+\end{figure}
+
+
+The development of these pilot programs using \Eol* did not uncover issues or
+bugs that had not been detected by the unit tests. Therefore, we can conclude
+that the unit tests and harness were most effective for the development
+process. Validating the system using realistic code examples has helped
+increase the confidence in the usefulness, stability and quality of this
+project.
 
 \beforeintro
