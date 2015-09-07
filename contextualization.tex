@@ -1303,4 +1303,74 @@ consecutive. Each parameter entry contains the following attributes:
 \end{itemize}
 
 
+\section{Automated Testing}
+
+Testing a system in an automated manner involves using a software component
+to control the execution of the tests. This software is separate component
+from the software being tested, which handles the unattended execution of
+a set of tests cases, and compares the output of the tested system with
+a specification of the expected outcome of each test.
+
+\subsection{Unit Testing}
+
+A technique that has not stopped increasing in popularity since the
+implementation of SUnit~\cite{kb-sunit} in 1998 for the Smalltalk programming
+language. A myriad of \emph{x}Unit testing frameworks based on the original
+SUnit started to appear for every programming language, to the point of unit
+testing becoming one of the most popular testing methods.
+
+Unit testing exercises individual units of source code, program modules,
+associated control data, etc.\ are tested to determine whether they are fit
+for use. The size of the unit varies depending on the subject being tested,
+e.g.\ for object-oriented systems, the unit can be an entire class, and for
+a system implemented in a procedural programming language the unit can be an
+individual function. An unit test is a short fragment of code created by the
+programmer during the development of a system, or by white box testers. The
+main goal is to ensure that the implementation meets its design and behaves as
+intended.
+
+Unit testing by itself cannot exercise every code path in a program, an
+therefore relies on the ability of the programmer to write meaningful unit
+tests. Nevertheless, the multiple advantages of unit testing compensate
+for the shortcomings. Those are:
+
+\begin{itemize}
+
+	\item It finds problems early in the development cycle, both in the
+		implementation and in the specification for the unit, because the tests
+		are written in parallel with the implementation.
+
+	\item It facilitates code refactoring. The programmer can change the
+		implementation for a module and use the unit tests to check that its
+		observable behaviour is unchanged. This is referred to as \emph{regression
+		testing}.
+
+	\item Unit tests are documentation of sorts. Looking at the source code of
+		unit tests it is possible to learn how the API of a module is supposed to
+		be used. Code in unit tests is always updated to match the interface of
+		the units, which is not always true for documentation.
+
+	\item Unit tests can be used as executable specifications. Tests implicitly
+		describe the interface of the tested unit. If the tests are written before
+		the implementation, they can be regarded as a kind of specification, with
+		the added bonus that the specification itself can be executed to test the
+		implementation.
+
+\end{itemize}
+
+\subsubsection{Test Harnesses}
+
+A test harness, or \emph{automated test framework} is a collection of software
+and test data configured to do unit testing of a system, by running the tests
+in varying conditions, and monitoring its behavior and outputs. A harness has
+two main parts: the \emph{execution engine} and the \emph{test repository}.
+
+The minimum facilities required in an execution engine are functionality
+to be used by the unit tests to facilitate comparing generated and expected
+results, allowing the of individual tests, and providing reports that allow to
+analyze the results of test execution. Typical additions
+
+The test repository is the corpus of unit tests, plus any additional data
+external to them that is needed for their execution.
+
 \beforeintro

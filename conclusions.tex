@@ -41,12 +41,12 @@ types and functions available in ELF shared object files.
 The source code has been publicly available~\cite{eol-github} under the terms
 of the \gls{OSI}-approved MIT license since the very moment the development
 effort was started, and so the code repository contains the complete history
-of changes it has received so far. The MIT license was chosen because most
+of changes it has received so far. The MIT license~\cite{mit-license} was chosen because most
 Lua-related projects use either the BSD or MIT license, and using a compatible
-license allows developers to mix \Eol* with other Lua modules. Also, referring
-to the MIT license clearer because it avoids the potential confusion derived
-from the existence of different variants of the BSD
-license~\cite{bsd-licenses}.
+license allows developers to confidently mix \Eol* with other Lua modules
+right away. Also, referring to the MIT license is clearer because it avoids
+the potential confusion derived from the existence of different variants of
+the BSD license~\cite{bsd-licenses}.
 
 Separating the code which deals with native function invocation allows us to
 select select which method is used to invoke native functions from Lua at
@@ -162,9 +162,30 @@ conventions during the development of the JIT code generator.
 
 \section{Planning Results}
 
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{rlrrrr}
+		\toprule
+		& & \multicolumn{2}{c}{Time (days)} & \multicolumn{2}{c}{Cost (€)} \\
+		\cmidrule(r){3-6}
+		\# & Task & Estimated  & Actual  & Estimated & Actual \\
+		\midrule
+		1. & Initial study     & 10 &  5 &  5.200 &  2.600 \\
+		2. & Analysis          & 15 & 23 &  7.800 & 11.960 \\
+		3. & Development       & 50 & 80 & 26.000 & 41.600 \\
+		4. & Validation        & 10 &  8 &  5.200 &  4.160 \\
+		5. & Documentation     & 30 & 78 & 15.600 & 40.560 \\
+		\midrule
+		  & \emph{Total}      & 115 & 194& 59.800 & 100.880 \\
+		\bottomrule
+	\end{tabular}
+	\caption{Estimated vs.\ actual schedule and cost}
+	\label{tab:sched-postmortem}
+\end{table}
+
 The planning done \emph{a priori} (\autoref{sec:plan-method}) resulted in a
 tight schedule which did not include enough clearance for anything else than
-the smallest of the unexpected delays (c.f \autoref{tab:sched-postmortem}).
+the smallest of the unexpected delays~(c.f \autoref{tab:sched-postmortem}).
 In hindsight, it would have been good to schedule additional time to cope
 with the multiple causes of delays:
 
@@ -176,7 +197,7 @@ with the multiple causes of delays:
 	used to do documentation work in a regular basis it might have been an
 	adequate estimation, that was not the case for the author. Plus, there was
 	the added difficulty of writing the documentation in English: while
-	capable of its fluent use it in a daily basis, the author is not a native
+	capable of its fluent use in a daily basis, the author is not a native
 	speaker and lacked experience in writing long-form technical documentation
 	in it.
 
@@ -198,30 +219,16 @@ with the multiple causes of delays:
 
 \end{itemize}
 
-\begin{table}[t]
-	\centering
-	\begin{tabular}{rlrr}
-		\toprule
-		\# & Task & Estimation & Actual \\
-		\midrule
-		1. & Initial study     & 10 &  5 \\
-		2. & Analysis          & 15 & 23 \\
-		3. & Development       & 50 & 80 \\
-		4. & Validation        & 10 &  8 \\
-		5. & Documentation     & 30 & 78 \\
-		\midrule
-		  & \emph{Total}      & 115 & 194\\
-		\bottomrule
-	\end{tabular}
-	\caption{Estimated vs. actual schedule (in hours)}
-	\label{tab:sched-postmortem}
-\end{table}
 
 On the other side of the spectrum, the \emph{Initial study} was carried out
 faster than planned: the preexisting knowledge about Lua, LuaJIT, and the
 existing solutions to use native libraries with them was a valuable asset.
 
-\todo[inline]{Mention the final cost of the project, in €€€}
+The final cost of the project has increased accordingly to the additional time
+needed for its completion, being now 100.800€ instead of the planned 59.800€.
+This figure does not take into account the time devoted by the tutor of the
+project.
+
 
 \section{Future Directions}
 
@@ -260,7 +267,6 @@ new possibilities:
 
 The following fall into the category of improvements which can be done with
 a moderate effort, and would certainly provide added value to the project:
-
 
 \begin{itemize}
 

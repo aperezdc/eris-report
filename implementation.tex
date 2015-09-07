@@ -760,13 +760,13 @@ of the C standard library, starting from an empty cache:
       width=0.85\textwidth,
       height=0.5\textwidth,
       style={/pgf/number format/assume math mode=true},
-      % xlabel={\emph{time$\rightarrow$}},
+      xlabel={\emph{time}},
       % ylabel={\emph{hits / misses}},
       enlarge x limits=0.05,
       axis on top,
       tick align=inside,
-      axis x line=none,
-      axis y line*=right,
+      axis x line*=bottom,
+      axis y line*=left,
       legend style={legend pos=north west},
       x tick label style={opacity=0},
     ]
@@ -816,8 +816,8 @@ amount of cache misses is very small.
 
 The \verb|eol.typeof()| function accepts arguments of different types.
 The \verb|luaL_check*()| family of functions from the Lua C API raise an error
-if the argument does is not of the expected type, and therefore some
-additional work is needed to ensure that it works as specified:
+if the argument is not of the expected type, and therefore some additional
+work is needed to ensure that it works as specified:
 
 \begin{ccode}
 static int
